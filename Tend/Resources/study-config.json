@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "ruleVersion": "demo-2026-09-08-v1",
+  "ruleStatus": "demo-pending-review",
+  "studyDurationDays": 56,
+  "protocolVersion": "demo-protocol-v1",
+  "sourceDocuments": [
+    "README.md",
+    "Tend/Resources/study-config.json"
+  ],
+  "contentStatus": "Prototype scripts for usability testing; not study-approved intervention materials.",
+  "promptTimingStatus": "Illustrative times; the study team's finalized timing is pending.",
+  "prompts": [
+    {
+      "id": "morning",
+      "label": "Morning",
+      "hour": 10,
+      "minute": 0
+    },
+    {
+      "id": "afternoon",
+      "label": "Afternoon",
+      "hour": 14,
+      "minute": 0
+    },
+    {
+      "id": "evening",
+      "label": "Evening",
+      "hour": 19,
+      "minute": 0
+    }
+  ],
+  "thresholds": {
+    "painHigh": 4,
+    "fatigueHigh": 4,
+    "physicalFunctionLow": 2,
+    "willingnessLow": 2,
+    "distressHigh": 4
+  },
+  "practices": [
+    {
+      "id": "mindful-breathing",
+      "title": "Mindful breathing",
+      "subtitle": "A gentle pause, one breath at a time.",
+      "category": "mindfulness",
+      "durationSeconds": 300,
+      "symbol": "wind",
+      "playerCue": "Notice your breath",
+      "steps": [
+        "Settle into a comfortable position. Let your eyes rest wherever feels right.",
+        "Notice the next breath coming in, and then going out. Keep your breathing natural.",
+        "If your attention wanders, gently return to the feeling of breathing.",
+        "Before you finish, notice the room around you. Take the next moment at your own pace."
+      ],
+      "audioScript": "Find a comfortable position. You can keep your eyes open. Let your shoulders settle. Notice a breath coming in, and a breath going out. There is no need to make your breathing deeper or slower. Simply notice. If thoughts arrive, that is okay. Gently return to the next breath. Continue at your own pace. When you are ready, notice the space around you."
+    },
+    {
+      "id": "body-scan",
+      "title": "Body scan",
+      "subtitle": "Notice your body without needing to change it.",
+      "category": "mindfulness",
+      "durationSeconds": 300,
+      "symbol": "figure.mind.and.body",
+      "playerCue": "Notice each area",
+      "steps": [
+        "Choose a supported position that feels comfortable for you.",
+        "Notice the points where your body meets the chair or floor.",
+        "Move your attention gently from your feet toward your face. Skip any area you prefer not to focus on.",
+        "Let your attention widen to the whole room when you are ready."
+      ],
+      "audioScript": "Settle into a supported position. Notice where you meet the chair or floor. Bring your attention to your feet, if that feels comfortable. Then notice your legs, your hands, your shoulders, and your face. There is no need to change any sensation. You can skip an area, or return your attention to the room at any time. Allow yourself a quiet moment."
+    },
+    {
+      "id": "self-compassion",
+      "title": "Self-kindness meditation",
+      "subtitle": "Make a little space for how you feel.",
+      "category": "mindfulness",
+      "durationSeconds": 180,
+      "symbol": "heart",
+      "playerCue": "Offer a kind phrase",
+      "steps": [
+        "Pause in a comfortable position and notice how this moment feels.",
+        "Silently acknowledge: this is how I am feeling right now.",
+        "Offer yourself a phrase you would say to a friend, such as: may I be gentle with myself.",
+        "Let the words go and take one natural breath before continuing your day."
+      ],
+      "audioScript": "Take a moment to pause. Whatever you are feeling, you do not have to change it right now. You might quietly say, this is how I am feeling. Consider a kind phrase you would offer a friend. Perhaps, may I be gentle with myself. Use different words if you prefer. Let yourself rest with that kindness for a moment, then take one natural breath."
+    },
+    {
+      "id": "grounding",
+      "title": "Grounding with your senses",
+      "subtitle": "One quiet minute with the world around you.",
+      "category": "mindfulness",
+      "durationSeconds": 60,
+      "symbol": "leaf",
+      "playerCue": "Notice your senses",
+      "steps": [
+        "Look around and notice three things you can see.",
+        "Notice one sound nearby and one point of contact with your chair or the floor.",
+        "Take a natural breath. You can finish here."
+      ],
+      "audioScript": "Look around and notice three things you can see. Take your time. Notice a sound nearby. Feel one point where your body meets your chair or the floor. Take a natural breath. This small pause is enough for now."
+    },
+    {
+      "id": "short-walk",
+      "title": "Short walk",
+      "subtitle": "An easy walk, at a pace that feels like yours.",
+      "category": "movement",
+      "durationSeconds": 300,
+      "symbol": "figure.walk",
+      "playerCue": "Walk comfortably",
+      "steps": [
+        "Choose a clear, familiar route indoors or outdoors.",
+        "Start walking at a comfortable, unhurried pace.",
+        "Notice the movement of your feet and what you see around you.",
+        "Slow down or stop whenever you wish. Return to a comfortable place to finish."
+      ],
+      "audioScript": "Choose a clear, familiar place to walk. Begin at a pace that feels comfortable. There is no distance to reach. Notice your surroundings and the rhythm of your steps. You can slow down, pause, or stop at any time. Finish in a comfortable place."
+    },
+    {
+      "id": "chair-stretch",
+      "title": "Chair movement",
+      "subtitle": "A few gentle movements from your chair.",
+      "category": "movement",
+      "durationSeconds": 180,
+      "symbol": "figure.flexibility",
+      "playerCue": "Move gently in your chair",
+      "steps": [
+        "Sit in a stable chair with your feet supported.",
+        "Gently open and close your hands, then make small, comfortable ankle circles.",
+        "If comfortable, let your shoulders lift a little and settle again. Keep each movement easy.",
+        "Rest whenever you wish. Skip any movement that is uncomfortable."
+      ],
+      "audioScript": "Sit in a stable chair with your feet supported. Start with small movements. Gently open and close your hands. If comfortable, try a small ankle circle. Let your shoulders lift a little and settle. Stay within a range that feels easy. Skip any movement you prefer, and rest whenever you wish."
+    },
+    {
+      "id": "movement-break",
+      "title": "Seated movement break",
+      "subtitle": "A seated reset. A minute is enough.",
+      "category": "movement",
+      "durationSeconds": 60,
+      "symbol": "figure.seated.side",
+      "playerCue": "Try a small movement",
+      "steps": [
+        "Stay seated in a comfortable, supported position.",
+        "Try a small hand movement or gently reposition your feet, only if comfortable.",
+        "Let your hands rest. Stop or skip whenever you wish."
+      ],
+      "audioScript": "Stay seated and make yourself comfortable. If it feels okay, gently open and close your hands, or make a small adjustment to your feet. Keep it small and easy. Then let your hands rest. You can stop or skip this practice whenever you wish."
+    },
+    {
+      "id": "sit-to-stand",
+      "title": "Sit-to-stand practice",
+      "subtitle": "A short, unhurried movement with a stable chair.",
+      "category": "movement",
+      "durationSeconds": 120,
+      "symbol": "figure.stand",
+      "playerCue": "Rise only if comfortable",
+      "steps": [
+        "Use a stable chair that will not slide, with clear space around it.",
+        "Only if standing feels comfortable and safe, rise at your own pace, using your hands for support if needed.",
+        "Return to sitting slowly. Rest and repeat only as comfortable; there is no target number.",
+        "You can remain seated, switch to a gentler practice, or stop at any time."
+      ],
+      "audioScript": "Choose a stable chair and clear the space around you. Only if standing feels comfortable and safe, rise slowly, using your hands for support if you need them. Return to sitting at your own pace. Rest between movements. There is no target number. You can remain seated or stop at any time."
+    }
+  ]
+}

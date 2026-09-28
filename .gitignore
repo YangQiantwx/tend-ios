@@ -1,0 +1,20 @@
+# Build products and local editor state
+.DS_Store
+.build/
+build/
+DerivedData/
+.swiftpm/
+.xcodebuildmcp/
+*.xcuserstate
+xcuserdata/
+*.xcresult/
+__pycache__/
+.venv/
+venv/
+# Local configuration and non-public project material
+.env
+.env.*
+sources/
+evidence/
+private/
+*.log

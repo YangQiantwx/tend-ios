@@ -1,0 +1,13 @@
+# CPU generation only. The iOS app has no Python or model dependency.
+pocket-tts==3.3.0
+torch==2.10.0
+numpy==2.2.6
+scipy==1.13.0
+soundfile==0.14.0
+pydantic==2.12.5
+sentencepiece==0.2.1
+tokenizers==0.21.4
+safetensors==0.7.0
+einops==0.8.2
+huggingface-hub==0.21.0
+python-multipart==0.0.22
