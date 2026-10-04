@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppStore.self) private var store
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ScaledMetric(relativeTo: .largeTitle) private var titleSize: CGFloat = 34
     @Binding var focusPractices: Bool
     @Binding var openSaved: Bool
@@ -27,8 +28,8 @@ struct HomeView: View {
                                         .clipShape(RoundedRectangle(cornerRadius: 20))
                                 }
                             }
-                            if store.data.settings.participantID == "UI-FIXTURE-ONLY" {
-                                Label("Illustrative test data", systemImage: "flask")
+                            if store.usesSampleHistory {
+                                Label(store.isDemoMode ? "Illustrative demo data" : "Illustrative test data", systemImage: "flask")
                                     .font(.footnote.weight(.medium))
                                     .foregroundStyle(TendTheme.secondary)
                                     .accessibilityIdentifier("home.testData")
@@ -83,7 +84,7 @@ struct HomeView: View {
                 .task(id: focusPractices) {
                     guard focusPractices else { return }
                     await Task.yield()
-                    withAnimation(.easeInOut(duration: 0.25)) {
+                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.25)) {
                         proxy.scrollTo("practiceDirectory", anchor: .top)
                     }
                     focusPractices = false

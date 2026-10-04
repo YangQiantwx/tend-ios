@@ -1,6 +1,66 @@
 import XCTest
 
 extension TendUITests {
+    @MainActor func testCancelConnectionAndMessageDoNotSaveAndPreviewShowsDemoStatus() {
+        launchFreshApp()
+        onboard()
+        selectTab("Settings")
+        tap(app.buttons["profile.fitbit"])
+        tap(app.buttons["fitbit.connect"])
+        app.alerts.buttons["Cancel"].tap()
+        XCTAssertTrue(labelContaining("Demo disconnected").exists)
+        XCTAssertFalse(app.buttons["fitbit.sync"].exists)
+        tap(app.buttons["fitbit.connect"])
+        app.alerts.buttons["Use demo connection"].tap()
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        tap(app.buttons["profile.research"])
+        revealResearchList(app.buttons["research.loadSample"])
+        XCTAssertTrue(label("Demo connection, Active").exists)
+        XCTAssertTrue(label("Real Fitbit, Not connected").exists)
+
+        selectTab("Q&A")
+        tap(app.buttons["qa.contact"])
+        tap(app.buttons["support.compose"])
+        XCTAssertFalse(app.buttons["support.saveRequest"].isEnabled)
+        let message = app.textViews["support.message"]
+        message.tap()
+        message.typeText("Discard this temporary question")
+        hideSupportKeyboard()
+        app.navigationBars.buttons["Cancel"].tap()
+        let discard = app.buttons.matching(NSPredicate(format: "label == %@", "Discard changes"))
+            .allElementsBoundByIndex.first(where: { $0.isHittable })
+        XCTAssertNotNil(discard)
+        discard?.tap()
+        XCTAssertTrue(app.staticTexts["No saved messages"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor func testNameAudioAndThemePersistAfterRelaunch() {
+        launchFreshApp()
+        onboard()
+        selectTab("Settings")
+        tap(app.buttons["profile.editName"])
+        let name = app.alerts.textFields.firstMatch
+        name.tap()
+        name.typeText("Taylor")
+        app.alerts.buttons["Save"].tap()
+        tap(app.buttons["profile.colorTheme.forest"])
+        let audio = app.switches["profile.audio"]
+        reveal(audio)
+        XCTAssertEqual(audio.value as? String, "1")
+        audio.tap()
+        XCTAssertEqual(audio.value as? String, "0")
+        relaunchKeepingData()
+        selectTab("Settings")
+        XCTAssertTrue(app.staticTexts["Taylor"].waitForExistence(timeout: 5))
+        reveal(app.buttons["profile.colorTheme.forest"])
+        XCTAssertTrue(app.buttons["profile.colorTheme.forest"].isSelected)
+        reveal(audio)
+        XCTAssertEqual(audio.value as? String, "0")
+        audio.tap()
+        reveal(app.buttons["profile.colorTheme.ocean"], direction: .down)
+        tap(app.buttons["profile.colorTheme.ocean"])
+    }
+
     @MainActor func testFitbitDemoConnectionSyncAndDisconnectPersist() {
         launchFreshApp()
         onboard()

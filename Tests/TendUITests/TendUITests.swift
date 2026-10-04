@@ -153,7 +153,8 @@ final class TendUITests: XCTestCase {
         // LabeledContent exposes its value as a combined accessibility label.
         // Read-only labels need to exist; they do not need to be tappable.
         XCTAssertTrue(label("Sample days, 7").waitForExistence(timeout: 5))
-        XCTAssertTrue(label("Connection, No Fitbit connected").waitForExistence(timeout: 5))
+        XCTAssertTrue(label("Real Fitbit, Not connected").waitForExistence(timeout: 5))
+        XCTAssertTrue(label("Demo connection, Disconnected").waitForExistence(timeout: 5))
         XCTAssertTrue(label("Missing sample metrics, 5").waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Missing means unknown, not zero. Sample Fitbit data never affects practice suggestions."].waitForExistence(timeout: 5))
         capture("12-sample-wearable-missingness")

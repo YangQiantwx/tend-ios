@@ -13,7 +13,7 @@ enum TendPalette: String, CaseIterable, Identifiable {
 }
 
 enum TendTheme {
-    static let palettePreferenceKey = "tend.colorPalette"
+    static let palettePreferenceKey = AppDataMode.current.preferenceKey("tend.colorPalette")
     static var selectedPalette: TendPalette {
         TendPalette(rawValue: UserDefaults.standard.string(forKey: palettePreferenceKey) ?? "") ?? .ocean
     }

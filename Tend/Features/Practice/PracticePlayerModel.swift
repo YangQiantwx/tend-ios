@@ -5,20 +5,19 @@ import Observation
 @MainActor @Observable
 final class PracticePlayerModel {
     let id = UUID()
-    let plannedSeconds: Double
+    var plannedSeconds: Double { timer.plannedSeconds }
     private(set) var startedAt = Date()
-    private(set) var elapsed: Double = 0
-    private(set) var isPaused = true
+    var elapsed: Double { timer.elapsed }
+    var isPaused: Bool { timer.isPaused }
     private(set) var hasStarted = false
     private(set) var pausedForBackground = false
     private(set) var audioEnabled: Bool
     private(set) var audioError: String?
-    private var accumulated: Double = 0
-    private var runningSince: TimeInterval?
+    private var timer: PracticeTimer
     private let narration: PracticeNarrationPlayer
 
     init(practice: Practice, audioEnabled: Bool) {
-        plannedSeconds = Double(max(1, practice.durationSeconds))
+        timer = PracticeTimer(plannedSeconds: Double(practice.durationSeconds))
         narration = PracticeNarrationPlayer(practiceID: practice.id, script: practice.audioScript)
         self.audioEnabled = audioEnabled
         narration.onError = { [weak self] message in self?.audioError = message }
@@ -41,27 +40,21 @@ final class PracticePlayerModel {
     }
 
     func tick() {
-        guard let runningSince else { return }
-        elapsed = min(plannedSeconds, accumulated + ProcessInfo.processInfo.systemUptime - runningSince)
+        guard !isPaused else { return }
+        timer.tick(at: ProcessInfo.processInfo.systemUptime)
         if timerFinished { pause() }
     }
 
     func pause(forBackground: Bool = false) {
-        if let runningSince {
-            elapsed = min(plannedSeconds, accumulated + ProcessInfo.processInfo.systemUptime - runningSince)
-            accumulated = elapsed
-        }
-        runningSince = nil
-        isPaused = true
+        timer.pause(at: ProcessInfo.processInfo.systemUptime)
         pausedForBackground = forBackground && !timerFinished
         narration.pause()
     }
 
     func resume() {
-        guard !timerFinished else { return }
+        guard isPaused, !timerFinished else { return }
         pausedForBackground = false
-        runningSince = ProcessInfo.processInfo.systemUptime
-        isPaused = false
+        timer.resume(at: ProcessInfo.processInfo.systemUptime)
         if audioEnabled { narration.resume() }
     }
 

@@ -15,8 +15,8 @@ struct JourneyView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    if store.data.settings.participantID == "UI-FIXTURE-ONLY" {
-                        Label("Illustrative test data", systemImage: "testtube.2")
+                    if store.usesSampleHistory {
+                        Label(store.isDemoMode ? "Illustrative demo data" : "Illustrative test data", systemImage: "testtube.2")
                             .font(.subheadline.weight(.semibold)).foregroundStyle(TendTheme.terracotta)
                     }
                     weeklyProgress

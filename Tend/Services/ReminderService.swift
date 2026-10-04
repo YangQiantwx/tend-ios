@@ -104,6 +104,10 @@ enum SavedRecommendationReminder {
 extension AppStore {
     /// Foreground refresh replenishes a maximum of 20 days, never past studyEndDate.
     func refreshNotificationStatus() async {
+        guard dataMode.allowsSystemNotifications else {
+            notificationsStatus = "System reminders are off in demo and test mode"
+            return
+        }
         await ReminderService.acquire()
         defer { ReminderService.release() }
         do {
@@ -117,6 +121,10 @@ extension AppStore {
     }
 
     func setNotificationsEnabled(_ enabled: Bool) async {
+        guard dataMode.allowsSystemNotifications else {
+            notificationsStatus = "System reminders are off in demo and test mode"
+            return
+        }
         await ReminderService.acquire()
         defer { ReminderService.release() }
         do {
@@ -140,6 +148,13 @@ extension AppStore {
     }
 
     func updateReminders(_ reminders: [ReminderSlot]) async -> Bool {
+        if !dataMode.allowsSystemNotifications {
+            do { try StudyConfiguration.validatePrompts(reminders) }
+            catch { persistenceError = error.localizedDescription; return false }
+            var settings = data.settings
+            settings.reminders = reminders
+            return updateSettings(settings)
+        }
         await ReminderService.acquire()
         defer { ReminderService.release() }
         do {
@@ -184,7 +199,13 @@ extension AppStore {
 }
 
 private extension UNAuthorizationStatus {
-    var allowsReminders: Bool { self == .authorized || self == .provisional || self == .ephemeral }
+    var allowsReminders: Bool {
+        #if os(iOS)
+        self == .authorized || self == .provisional || self == .ephemeral
+        #else
+        self == .authorized || self == .provisional
+        #endif
+    }
 }
 
 /// The latest tapped reminder survives view creation, onboarding and process restart.
@@ -193,6 +214,7 @@ enum NotificationInbox {
     private static let key = "tend.pending-reminder-route.v1"
     private static let savedKey = "tend.open-saved.v1"
     static var pending: ReminderRoute? {
+        guard AppDataMode.current.allowsSystemNotifications else { return nil }
         guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
         return try? JSONDecoder().decode(ReminderRoute.self, from: data)
     }
@@ -204,7 +226,9 @@ enum NotificationInbox {
     static func acknowledge(_ id: UUID) {
         if pending?.id == id { UserDefaults.standard.removeObject(forKey: key) }
     }
-    static var shouldOpenSaved: Bool { UserDefaults.standard.bool(forKey: savedKey) }
+    static var shouldOpenSaved: Bool {
+        AppDataMode.current.allowsSystemNotifications && UserDefaults.standard.bool(forKey: savedKey)
+    }
     static func enqueueSaved() {
         UserDefaults.standard.set(true, forKey: savedKey)
         NotificationCenter.default.post(name: .tendSavedReminderOpened, object: nil)

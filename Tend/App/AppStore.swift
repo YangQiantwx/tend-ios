@@ -5,6 +5,7 @@ import Observation
 final class AppStore {
     private(set) var data: StudyData
     let configuration: StudyConfiguration
+    let dataMode: AppDataMode
     private let repository: any StudyRepository
     private let directory: URL
     private let draftRepository: JSONDraftRepository
@@ -17,8 +18,10 @@ final class AppStore {
     private(set) var savedDraft: CheckInDraft?
     var notificationsStatus = "Not enabled"
 
-    init(configuration: StudyConfiguration, directory: URL, repository: (any StudyRepository)? = nil) throws {
+    init(configuration: StudyConfiguration, directory: URL, repository: (any StudyRepository)? = nil,
+         dataMode: AppDataMode = .current) throws {
         self.configuration = configuration
+        self.dataMode = dataMode
         self.directory = directory
         let studyRepository = repository ?? JSONStudyRepository(url: directory.appendingPathComponent("study-data.json"))
         self.repository = studyRepository
@@ -42,6 +45,11 @@ final class AppStore {
     }
 
     func practice(id: String) -> Practice? { configuration.practices.first { $0.id == id } }
+
+    var isDemoMode: Bool { dataMode == .demo }
+    var usesSampleHistory: Bool {
+        isDemoMode || data.settings.participantID == "UI-FIXTURE-ONLY"
+    }
 
     var savedRecommendations: [SavedRecommendation] {
         let now = Date()
@@ -210,7 +218,7 @@ final class AppStore {
             value.savedRecommendations?.removeAll { $0.id == saved.id }
             value.events.append(event("saved_recommendation_removed", reference: saved.checkInID.uuidString))
         }) else { return false }
-        Task { await SavedRecommendationReminder.cancel(saved.id) }
+        if dataMode.allowsSystemNotifications { Task { await SavedRecommendationReminder.cancel(saved.id) } }
         return true
     }
 
@@ -229,7 +237,7 @@ final class AppStore {
         let now = Date()
         let export = StudyExport(exportedAt: now, isPrototype: true, configuration: configuration, data: data,
                                  analysis: .build(data: data, configuration: configuration, now: now))
-        try JSONEncoder.study.encode(export).write(to: url, options: .atomic)
+        try export.write(to: url)
         return url
     }
 

@@ -36,19 +36,23 @@ struct TendApp: App {
                 throw CocoaError(.fileNoSuchFile)
             }
             let configuration = try StudyConfiguration.load(from: configurationURL)
-            var directory = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
+            let root = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
                                                         appropriateFor: nil, create: true).appendingPathComponent("Tend")
+            let mode = AppDataMode.current
+            let directory = mode.directory(in: root)
             #if DEBUG
-            if ProcessInfo.processInfo.arguments.contains("--uitesting") {
-                directory = directory.appendingPathComponent("UITests")
-                if ProcessInfo.processInfo.arguments.contains("--reset-test-data") {
-                    try? FileManager.default.removeItem(at: directory)
-                }
+            let arguments = ProcessInfo.processInfo.arguments
+            if mode.shouldReset(arguments: arguments), FileManager.default.fileExists(atPath: directory.path) {
+                try FileManager.default.removeItem(at: directory)
+            }
+            if mode == .uiTesting {
                 try UITestScenario.prepare(directory: directory, configuration: configuration,
-                                           arguments: ProcessInfo.processInfo.arguments)
+                                           arguments: arguments)
+            } else if mode == .demo {
+                try DemoScenario.prepare(directory: directory, configuration: configuration)
             }
             #endif
-            store = try AppStore(configuration: configuration, directory: directory)
+            store = try AppStore(configuration: configuration, directory: directory, dataMode: mode)
             startupError = nil
         } catch { startupError = error.localizedDescription }
     }

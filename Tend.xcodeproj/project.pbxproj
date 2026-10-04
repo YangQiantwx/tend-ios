@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		031722F6015B0BB7820B75FA /* PracticeTimer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B90BD66B6A768850157A480 /* PracticeTimer.swift */; };
 		07A3D1687DF38A421257DA0F /* ReminderSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48F824A984CBA52274CD0E6B /* ReminderSettingsView.swift */; };
 		0A6D2239A8B262C3851E6144 /* EMARatingsChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28DEB051F6BDBE93C68EEEEA /* EMARatingsChart.swift */; };
 		0C1A73652453FE8F0B8CD2DF /* PracticePlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DC1EC7FF5BEC8202387DE41 /* PracticePlayerView.swift */; };
@@ -19,8 +20,10 @@
 		29E864390F282DCAEE14450B /* PracticeFeedbackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E906CEA9A4D301C89166E28 /* PracticeFeedbackView.swift */; };
 		2BE14B4DA6DA94CE9383FC52 /* sit-to-stand.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 683CFA5F384839328D643C2A /* sit-to-stand.m4a */; };
 		2DAD0AD74BBC9D480A00BC54 /* PracticeCollectionViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C7E589339EF541F5BA8C2E0 /* PracticeCollectionViews.swift */; };
+		2F77668FEFCACCB9709CBDAC /* AppDataMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B45C53A907AA1EB197A77E2 /* AppDataMode.swift */; };
 		32FE522863FEAD1673420494 /* HistoryRows.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D1F304125A1E2D3ECAD1A40 /* HistoryRows.swift */; };
 		351EACEBF132703210A57E44 /* RatingQuestionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D29F787366FF08AA24AE6799 /* RatingQuestionView.swift */; };
+		365717D9EE74B781CF067463 /* DemoScenario.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACAFC07CDDE615CDE93395FF /* DemoScenario.swift */; };
 		37DDBCE6E24011677BE4A219 /* TendUITests+History.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6450FB31A39ED019BEE5EAB0 /* TendUITests+History.swift */; };
 		3C4ED82422140BC9FD733511 /* ResearchObservationViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E32BAA987582026025A2632 /* ResearchObservationViews.swift */; };
 		444C1BBAFD1350837F351119 /* ContactSupportView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20FAA0EE1DEC18FE6D3B25C2 /* ContactSupportView.swift */; };
@@ -133,6 +136,8 @@
 		6597994DC28E740E8FFE6772 /* chair-stretch.m4a */ = {isa = PBXFileReference; path = "chair-stretch.m4a"; sourceTree = "<group>"; };
 		683CFA5F384839328D643C2A /* sit-to-stand.m4a */ = {isa = PBXFileReference; path = "sit-to-stand.m4a"; sourceTree = "<group>"; };
 		68C3A6B657AF9DF2AA5D0459 /* TendApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TendApp.swift; sourceTree = "<group>"; };
+		6B45C53A907AA1EB197A77E2 /* AppDataMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDataMode.swift; sourceTree = "<group>"; };
+		6B90BD66B6A768850157A480 /* PracticeTimer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeTimer.swift; sourceTree = "<group>"; };
 		6C4AF0EC52115955D5C25954 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		755A999EECEAC77EF59D5B5E /* short-walk.m4a */ = {isa = PBXFileReference; path = "short-walk.m4a"; sourceTree = "<group>"; };
 		75812BB49820854448C94B22 /* StudyData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudyData.swift; sourceTree = "<group>"; };
@@ -152,6 +157,7 @@
 		A05816BE054F658B68365E9C /* ResearchPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResearchPreviewView.swift; sourceTree = "<group>"; };
 		A2207BD4C4063F37E76E52E0 /* SavedReminderPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SavedReminderPlan.swift; sourceTree = "<group>"; };
 		A641837CC455B6CD45CB8F50 /* LandscapeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapeView.swift; sourceTree = "<group>"; };
+		ACAFC07CDDE615CDE93395FF /* DemoScenario.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoScenario.swift; sourceTree = "<group>"; };
 		B0810887F7B80A9508581AFC /* Tend.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Tend.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B442036E6982990F913CD38E /* CC-BY-4.0.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "CC-BY-4.0.txt"; sourceTree = "<group>"; };
 		BCD3ECBECC15D2F8B07C1284 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -346,12 +352,15 @@
 		A880AF714A4BD98C089A1DC3 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				6B45C53A907AA1EB197A77E2 /* AppDataMode.swift */,
+				ACAFC07CDDE615CDE93395FF /* DemoScenario.swift */,
 				EB0053F01659930D85591352 /* EMADraft.swift */,
 				8A312DAA38F92A54954D28FA /* FitbitDemoConnection.swift */,
 				55D78EB18945C52E6FE2D3B1 /* JourneyAnalytics.swift */,
 				D82D438B9BF8E1C794FFFB5A /* JSONDraftRepository.swift */,
 				159655D78583F5DED9AA20C0 /* JSONStudyRepository.swift */,
 				1B97EE5E73532A6628AF80F9 /* Practice.swift */,
+				6B90BD66B6A768850157A480 /* PracticeTimer.swift */,
 				3D871C15BB9EB0931C70F64D /* ReminderPlan.swift */,
 				2D276732CDD444C8B1CA722C /* ResearchAnalysis.swift */,
 				8FF297D98558DA95B58A66A6 /* RuleEngine.swift */,
@@ -511,6 +520,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				787620E9BA7FA18D3F5B66FD /* AboutTendView.swift in Sources */,
+				2F77668FEFCACCB9709CBDAC /* AppDataMode.swift in Sources */,
 				B50B3CE9251DB78BC38A3001 /* AppStore+Sessions.swift in Sources */,
 				744B7FFE20857639CE1C953F /* AppStore+Support.swift in Sources */,
 				8A0735CFD5F6DCD0484CB9B8 /* AppStore.swift in Sources */,
@@ -519,6 +529,7 @@
 				D82D3810068D3F0D5298B0D9 /* CheckInWeekChart.swift in Sources */,
 				444C1BBAFD1350837F351119 /* ContactSupportView.swift in Sources */,
 				830F6EAB884B50E154BEEFDC /* DailyCheckInCard.swift in Sources */,
+				365717D9EE74B781CF067463 /* DemoScenario.swift in Sources */,
 				CCE80ECEE3FB227B753C34E4 /* EMADraft.swift in Sources */,
 				0A6D2239A8B262C3851E6144 /* EMARatingsChart.swift in Sources */,
 				7494BFFB30104A2B902BB1C7 /* FitbitConnectionView.swift in Sources */,
@@ -543,6 +554,7 @@
 				CEA3F27B92CFA95149E745D0 /* PracticePlayerModel.swift in Sources */,
 				0C1A73652453FE8F0B8CD2DF /* PracticePlayerView.swift in Sources */,
 				EFE26E272676E39DA96A3A3B /* PracticeTimeChart.swift in Sources */,
+				031722F6015B0BB7820B75FA /* PracticeTimer.swift in Sources */,
 				1F72A67A66EF5BC7DA8A78C4 /* ProfileView.swift in Sources */,
 				351EACEBF132703210A57E44 /* RatingQuestionView.swift in Sources */,
 				6D363096B798D0C58C542A11 /* RecordDetailViews.swift in Sources */,

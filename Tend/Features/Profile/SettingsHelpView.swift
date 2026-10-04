@@ -7,6 +7,7 @@ struct QandATabView: View {
 }
 
 struct FrequentlyAskedQuestionsView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var expandedQuestion: Int?
 
     private let questions: [(String, String)] = [
@@ -24,7 +25,7 @@ struct FrequentlyAskedQuestionsView: View {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(questions.indices, id: \.self) { index in
                         Button {
-                            withAnimation(.easeInOut(duration: 0.2)) {
+                            withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
                                 expandedQuestion = expandedQuestion == index ? nil : index
                             }
                         } label: {

@@ -83,7 +83,7 @@ struct ProfileView: View {
                     Label("Notifications", systemImage: "bell")
                 }
                 .tint(TendTheme.forest)
-                .disabled(updatingNotifications)
+                .disabled(updatingNotifications || !store.dataMode.allowsSystemNotifications)
                 .accessibilityIdentifier("profile.notifications")
                 Text(store.notificationsStatus)
                     .font(.subheadline)

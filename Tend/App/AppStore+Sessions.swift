@@ -13,7 +13,7 @@ extension AppStore {
             value.events.append(event(session.completed ? "practice_completed" : "practice_ended_early",
                                       reference: session.id.uuidString, details: details))
         }
-        if didSave, session.completed {
+        if didSave, session.completed, dataMode.allowsSystemNotifications {
             for item in saved where item.checkInID == session.checkInID && remainingPractices(for: item).isEmpty {
                 Task { await SavedRecommendationReminder.cancel(item.id) }
             }

@@ -32,7 +32,9 @@ struct ResearchPreviewView: View {
                 }.accessibilityIdentifier("research.protocol")
             }
             Section("Wearable data quality") {
-                LabeledContent("Connection", value: "No Fitbit connected")
+                LabeledContent("Real Fitbit", value: "Not connected")
+                LabeledContent("Demo connection", value: store.data.fitbitDemoConnection?.isConnected == true
+                               ? "Active" : "Disconnected")
                 LabeledContent("Sample days", value: "\(store.data.wearableDays.count)")
                 LabeledContent("Sample last sync", value: lastSync?.formatted(date: .abbreviated, time: .shortened) ?? "Not available")
                 LabeledContent("Missing sample metrics", value: store.data.wearableDays.isEmpty ? "No samples" : "\(missingFields)")

@@ -156,6 +156,8 @@ struct PracticePlayerView: View {
             Toggle(isOn: Binding(get: { player.audioEnabled }, set: { player.setAudioEnabled($0) })) {
                 Label("Spoken guide", systemImage: "speaker.wave.2")
             }.tint(TendTheme.forest).accessibilityIdentifier("practice.voice")
+            Text("A short introduction, followed by quiet practice.")
+                .font(.subheadline).foregroundStyle(TendTheme.secondary)
             if let audioError = player.audioError {
                 Text(audioError).font(.subheadline).foregroundStyle(TendTheme.secondary)
             }
