@@ -9,14 +9,21 @@ struct PracticeDetailView: View {
     var onContinueToOther: (() -> Void)? = nil
     @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
-    @ScaledMetric(relativeTo: .largeTitle) private var titleSize = 36
+    @ScaledMetric(relativeTo: .largeTitle) private var titleSize = 32
     @State private var activePractice: PracticePresentation?
     @State private var alert: PracticeDetailAlert?
-    @State private var selectionRecorded = false
+    @State private var recordedPracticeID: String?
+    @State private var completedSessionID: UUID?
 
     private var isMovement: Bool { practice.category == .movement }
     private var isSaved: Bool { store.data.savedPracticeIDs.contains(practice.id) }
     private var priorSession: PracticeSession? {
+        if let completedSessionID,
+           let session = store.data.sessions.first(where: {
+               $0.id == completedSessionID && $0.practiceID == practice.id && $0.completed
+           }) {
+            return session
+        }
         guard let checkInID else { return nil }
         return store.data.sessions.filter {
             $0.practiceID == practice.id && $0.checkInID == checkInID && $0.completed
@@ -43,40 +50,51 @@ struct PracticeDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                header
-                ZStack(alignment: .bottom) {
-                    PracticeArtwork(isMovement: isMovement, symbol: practice.symbol)
-                        .frame(height: 168).frame(maxWidth: .infinity)
-                    if isMovement {
-                        Label("Video demonstration placeholder", systemImage: "video")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(TendTheme.ink)
-                            .padding(.horizontal, 16).padding(.vertical, 10)
-                            .background(TendTheme.surface, in: Capsule())
-                            .padding(.bottom, 4)
-                    }
-                }
-                .accessibilityElement(children: .combine)
                 if completed {
-                    Label("Practice completed", systemImage: "checkmark.circle.fill")
-                        .font(.subheadline.weight(.medium)).foregroundStyle(TendTheme.forest)
-                        .tendCard(TendTheme.sage)
-                        .accessibilityIdentifier("practice.completed")
+                    VStack(spacing: 16) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 28, weight: .medium))
+                            .foregroundStyle(TendTheme.forest)
+                            .frame(width: 72, height: 72)
+                            .background(TendTheme.sage, in: Circle())
+                        Text("Practice complete")
+                            .font(.headline).foregroundStyle(TendTheme.forest)
+                            .accessibilityIdentifier("practice.completed")
+                        Text(practice.title)
+                            .font(TendTheme.display(titleSize))
+                            .multilineTextAlignment(.center)
+                            .accessibilityAddTraits(.isHeader)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 36)
+                } else {
+                    header
+                    ZStack(alignment: .bottom) {
+                        PracticeArtwork(isMovement: isMovement, symbol: practice.symbol)
+                            .frame(height: 144).frame(maxWidth: .infinity)
+                        if isMovement {
+                            Label("Video demonstration placeholder", systemImage: "video")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(TendTheme.ink)
+                                .padding(.horizontal, 16).padding(.vertical, 10)
+                                .background(TendTheme.surface, in: Capsule())
+                                .padding(.bottom, 4)
+                        }
+                    }
+                    .accessibilityElement(children: .combine)
+                    instructions
                 }
-                instructions
-                Label("Stop if uncomfortable", systemImage: "heart")
-                    .font(.subheadline).foregroundStyle(TendTheme.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(24)
         }
         .tendScreen()
-        .task {
-            if !selectionRecorded {
-                selectionRecorded = store.recordEvent(kind: "practice_selected", referenceID: practice.id,
+        .task(id: practice.id) {
+            if recordedPracticeID != practice.id {
+                let saved = store.recordEvent(kind: "practice_selected", referenceID: practice.id,
                                                       details: ["checkInID": checkInID?.uuidString ?? "",
                                                                 "entrySource": resolvedSource.rawValue,
                                                                 "previousSessionID": (previousSessionID ?? priorSession?.id)?.uuidString ?? ""])
+                if saved { recordedPracticeID = practice.id }
             }
         }
         .navigationTitle("Practice")
@@ -96,25 +114,37 @@ struct PracticeDetailView: View {
         }
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 8) {
-                if completed, let otherPractice, let onContinueToOther {
-                    Button {
-                        if recommendationExpired { alert = .expired }
-                        else { onContinueToOther() }
-                    } label: {
-                        Label("Try \(otherPractice.title)", systemImage: "arrow.right")
+                if completed {
+                    Button(action: returnToToday) {
+                        Label("Back to Today", systemImage: "sun.horizon")
                     }
                     .buttonStyle(PrimaryButtonStyle())
-                    .accessibilityIdentifier("practice.otherOption")
-                }
-                if isRepeat {
-                    Button(action: startPractice) {
-                        Label("Practice again", systemImage: "play.fill")
+                    .accessibilityIdentifier("practice.backToToday")
+                    .accessibilityHint(otherPractice == nil ? "Returns to Today" : "Keeps the remaining option in Saved for later")
+                    if let otherPractice, let onContinueToOther {
+                        Button {
+                            if recommendationExpired { alert = .expired }
+                            else { onContinueToOther() }
+                        } label: {
+                            Text("Try \(otherPractice.title)")
+                        }
+                        .buttonStyle(SecondaryButtonStyle())
+                        .accessibilityIdentifier("practice.otherOption")
                     }
-                    .buttonStyle(SecondaryButtonStyle())
-                    .accessibilityIdentifier("practice.start")
+                    Menu {
+                        Button(action: startPractice) {
+                            Label("Practice again", systemImage: "play.fill")
+                        }
+                        .accessibilityIdentifier("practice.start")
+                    } label: {
+                        Label("More", systemImage: "ellipsis")
+                            .font(.subheadline).frame(minHeight: 44)
+                    }
+                    .tint(TendTheme.secondary)
+                    .accessibilityIdentifier("practice.more")
                 } else {
                     Button(action: startPractice) {
-                        Label("Start practice", systemImage: "play.fill")
+                        Label(isRepeat ? "Practice again" : "Start practice", systemImage: "play.fill")
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     .accessibilityIdentifier("practice.start")
@@ -127,7 +157,8 @@ struct PracticeDetailView: View {
             PracticePlayerView(practice: presentation.practice, checkInID: presentation.checkInID,
                                audioEnabled: store.data.settings.audioEnabled,
                                entrySource: presentation.entrySource,
-                               previousSessionID: presentation.previousSessionID)
+                               previousSessionID: presentation.previousSessionID,
+                               onCompleted: { completedSessionID = $0 })
         }
         .alert(item: $alert) { reason in
             switch reason {
@@ -161,23 +192,32 @@ struct PracticeDetailView: View {
             if let first = practice.steps.first {
                 Text(first).font(.body).fixedSize(horizontal: false, vertical: true)
             }
-            if practice.steps.count > 1 {
-                DisclosureGroup("All steps") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        ForEach(Array(practice.steps.dropFirst().enumerated()), id: \.offset) { index, step in
-                            Text("\(index + 2). \(step)").font(.body)
-                        }
+            DisclosureGroup("All steps") {
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(Array(practice.steps.dropFirst().enumerated()), id: \.offset) { index, step in
+                        Text("\(index + 2). \(step)").font(.body)
                     }
-                    .padding(.top, 8)
+                    Label("Stop if uncomfortable", systemImage: "heart")
+                        .font(.subheadline).foregroundStyle(TendTheme.secondary)
                 }
-                .tint(TendTheme.forest)
+                .padding(.top, 8)
             }
+            .tint(TendTheme.forest)
         }
         .tendCard()
     }
 
     private var durationLabel: String {
         practice.durationSeconds >= 60 ? "\(practice.durationSeconds / 60) min" : "\(practice.durationSeconds) sec"
+    }
+
+    private func returnToToday() {
+        if otherPractice != nil, !recommendationExpired,
+           let checkInID, let record = store.data.checkIns.first(where: { $0.id == checkInID }) {
+            guard store.saveRecommendation(record) else { return }
+        }
+        activePractice = nil
+        store.returnToToday()
     }
 
     private func startPractice() {

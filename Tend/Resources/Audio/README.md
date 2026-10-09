@@ -2,7 +2,7 @@
 
 These recordings were synthesized from the `audioScript` fields in `study-config.json` with **Kyutai Pocket TTS 3.3.0**, the **English September 2026** stock-voice model and the **Alba** preset. They are generated speech, not recordings of a study team member. No private voice recording was supplied to the model.
 
-The app plays the files offline with `AVAudioPlayer`. Pause, resume, app backgrounding, audio interruptions and headphone disconnection preserve the practice timer's foreground-only behavior. The spoken introduction ends before the practice timer; the remaining time is quiet practice. The guide does not automatically repeat. If a recording is absent, cannot be decoded, or no longer matches the text's SHA-256, the app uses the iOS device voice.
+The app plays the files offline with `AVAudioPlayer` at 0.75× speed; fallback device speech uses 75% of its default rate. The practice timer still measures real active elapsed time. Pause, resume, app backgrounding, audio interruptions and headphone disconnection preserve the practice timer's foreground-only behavior. The spoken introduction ends before the practice timer; the remaining time is quiet practice. The guide does not automatically repeat. If a recording is absent, cannot be decoded, or no longer matches the text's SHA-256, the app uses the iOS device voice.
 
 ## Attribution and licensing
 

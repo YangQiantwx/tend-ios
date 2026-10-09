@@ -40,7 +40,7 @@ struct EMARatingsChart: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("\(rating.label) over time").font(.headline)
+                Text("Daily average").font(.headline)
                 Spacer(minLength: 8)
                 Picker("Rating", selection: $rating) {
                     ForEach(JourneyRating.allCases) { item in Text(item.label).tag(item) }
@@ -93,10 +93,10 @@ struct EMARatingsChart: View {
                         VStack(alignment: .leading, spacing: 5) {
                             Text(selected.date.formatted(.dateTime.month(.abbreviated).day())).font(.subheadline.weight(.semibold))
                             if let selectedRating {
-                                Text("Average \(selectedRating.averageLabel) / 5 · \(selectedRating.count) \(selectedRating.count == 1 ? "check-in" : "check-ins")")
+                                Text("\(selectedRating.averageLabel) / 5 · \(selectedRating.count) \(selectedRating.count == 1 ? "check-in" : "check-ins")")
                                     .font(.subheadline).foregroundStyle(TendTheme.secondary)
                             } else {
-                                Text("No rating recorded · View this day")
+                                Text("No rating")
                                     .font(.subheadline).foregroundStyle(TendTheme.secondary)
                             }
                         }

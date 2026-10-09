@@ -2,47 +2,96 @@ import SwiftUI
 
 struct CheckInHistoryView: View {
     @Environment(AppStore.self) private var store
-    @State private var filter = CheckInHistoryFilter.all
-    private var records: [CheckInRecord] {
-        store.data.checkIns.filter { filter.origin == nil || $0.origin == filter.origin }
-            .sorted { $0.completedAt > $1.completedAt }
-    }
+    @State private var period = CheckInHistoryPeriod.all
+    @State private var anchor: Date?
+    private var referenceDate: Date { anchor ?? store.data.checkIns.map(\.completedAt).max() ?? Date() }
+    private var records: [CheckInRecord] { period.records(store.data.checkIns, around: referenceDate) }
     private var dates: [Date] {
         Array(Set(records.map { Calendar.current.startOfDay(for: $0.completedAt) })).sorted(by: >)
     }
+
     var body: some View {
         List {
             Section {
-                Picker("Check-in type", selection: $filter) {
-                    ForEach(CheckInHistoryFilter.allCases) { Text($0.rawValue).tag($0) }
-                }.pickerStyle(.menu).accessibilityIdentifier("history.checkInFilter")
-                Text("\(records.count) \(records.count == 1 ? "check-in" : "check-ins")").font(.subheadline).foregroundStyle(TendTheme.secondary)
+                VStack(spacing: 16) {
+                    Picker("History period", selection: $period) {
+                        ForEach(CheckInHistoryPeriod.allCases) { Text($0.rawValue).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("history.period")
+                    .onChange(of: period) { _, _ in anchor = nil }
+                    if period != .all { periodNavigation }
+                }
+                .padding(.vertical, 8)
             }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+
             if records.isEmpty {
-                EmptyMoment(symbol: "calendar", title: "No check-ins here yet", message: "Try another filter.")
+                ContentUnavailableView("No check-ins", systemImage: "calendar",
+                    description: Text(period == .all ? "Your check-ins will appear here." : "Nothing recorded in this period."))
+                    .listRowBackground(Color.clear)
             }
             ForEach(dates, id: \.self) { date in
-                Section(date.formatted(date: .abbreviated, time: .omitted)) {
+                Section {
                     ForEach(records.filter { Calendar.current.isDate($0.completedAt, inSameDayAs: date) }) {
-                        CheckInHistoryRow(record: $0, showsChevron: false)
+                        CheckInHistoryRow(record: $0, showsChevron: false, showsDate: false)
                     }
+                } header: {
+                    Text(date.formatted(.dateTime.weekday(.wide).month(.abbreviated).day()))
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(TendTheme.secondary)
+                        .textCase(nil)
                 }
             }
         }
-        .scrollContentBackground(.hidden).tendScreen().navigationTitle("All check-ins")
+        .listStyle(.insetGrouped)
+        .scrollContentBackground(.hidden).tendScreen().navigationTitle("Check-ins")
         .navigationBarTitleDisplayMode(.inline).accessibilityIdentifier("history.checkIns")
     }
-}
 
-private enum CheckInHistoryFilter: String, CaseIterable, Identifiable {
-    case all = "All", scheduled = "Scheduled", onDemand = "On demand"
-    var id: String { rawValue }
-    var origin: CheckInOrigin? {
-        switch self {
-        case .all: nil
-        case .scheduled: .scheduled
-        case .onDemand: .onDemand
+    private var periodNavigation: some View {
+        HStack(spacing: 8) {
+            periodButton(offset: -1, symbol: "chevron.left", label: "Previous \(period.rawValue.lowercased())")
+            Text(periodTitle)
+                .font(.headline)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("history.periodTitle")
+            periodButton(offset: 1, symbol: "chevron.right", label: "Next \(period.rawValue.lowercased())")
         }
+    }
+
+    private func periodButton(offset: Int, symbol: String, label: String) -> some View {
+        Button { anchor = period.moving(offset, from: referenceDate) } label: {
+            Image(systemName: symbol)
+                .font(.body.weight(.semibold))
+                .frame(width: 44, height: 44)
+                .background(TendTheme.surface, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .disabled(!canMove(offset))
+        .opacity(canMove(offset) ? 1 : 0.3)
+        .accessibilityLabel(label)
+        .accessibilityIdentifier(offset < 0 ? "history.previousPeriod" : "history.nextPeriod")
+    }
+
+    private func canMove(_ offset: Int) -> Bool {
+        guard let first = store.data.checkIns.map(\.completedAt).min(),
+              let last = store.data.checkIns.map(\.completedAt).max(),
+              let interval = period.interval(containing: period.moving(offset, from: referenceDate)) else { return false }
+        return interval.start <= last && interval.end > first
+    }
+
+    private var periodTitle: String {
+        guard let interval = period.interval(containing: referenceDate) else { return "All check-ins" }
+        if period == .month { return referenceDate.formatted(.dateTime.month(.wide).year()) }
+        let lastDay = Calendar.current.date(byAdding: .day, value: -1, to: interval.end) ?? interval.start
+        let start = interval.start.formatted(.dateTime.month(.abbreviated).day())
+        let end = lastDay.formatted(.dateTime.month(.abbreviated).day())
+        let year = lastDay.formatted(.dateTime.year())
+        return "\(start) – \(end), \(year)"
     }
 }
 
@@ -120,7 +169,7 @@ struct JourneyDayDetailView: View {
             }
             Section("Your check-ins") {
                 if checkIns.isEmpty { Text("No check-ins recorded on this date.").foregroundStyle(TendTheme.secondary) }
-                ForEach(checkIns) { CheckInHistoryRow(record: $0, showsChevron: false) }
+                ForEach(checkIns) { CheckInHistoryRow(record: $0, showsChevron: false, showsDate: false) }
             }
             Section("Your practices") {
                 if sessions.isEmpty { Text("No practices recorded on this date.").foregroundStyle(TendTheme.secondary) }

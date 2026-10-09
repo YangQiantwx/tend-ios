@@ -5,6 +5,7 @@ final class ConfigurationTests: XCTestCase {
     func testSourceBoundariesAreExplicitInConfiguration() throws {
         let configuration = try loadConfiguration()
         XCTAssertEqual(configuration.prompts.count, 3)
+        XCTAssertEqual(configuration.prompts.map(\.hour), [10, 14, 18])
         XCTAssertEqual(configuration.studyDurationDays, 56)
         XCTAssertEqual(configuration.ruleStatus, "demo-pending-review")
         XCTAssertEqual(configuration.practices.count, 8)

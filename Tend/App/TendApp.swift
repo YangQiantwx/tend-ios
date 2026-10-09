@@ -6,6 +6,7 @@ struct TendApp: App {
     @State private var store: AppStore?
     @State private var startupError: String?
     init() {
+        TendTheme.configureTabTypography()
         // Install before the asynchronous store load and before any view subscribes.
         UNUserNotificationCenter.current().delegate = NotificationRouter.shared
     }

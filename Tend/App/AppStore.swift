@@ -15,6 +15,7 @@ final class AppStore {
     var activeCheckIn: CheckInPresentation?
     var pendingCheckInRequest: CheckInRequest?
     var isPracticePresented = false
+    private(set) var homeNavigationID = UUID()
     private(set) var savedDraft: CheckInDraft?
     var notificationsStatus = "Not enabled"
 
@@ -42,6 +43,13 @@ final class AppStore {
             savedDraft = nil
             try? draftRepository.remove()
         }
+    }
+
+    func returnToToday() {
+        activeCheckIn = nil
+        pendingCheckInRequest = nil
+        isPracticePresented = false
+        homeNavigationID = UUID()
     }
 
     func practice(id: String) -> Practice? { configuration.practices.first { $0.id == id } }
@@ -86,6 +94,17 @@ final class AppStore {
         Set(todayCheckIns.filter { $0.origin == .scheduled }.compactMap(\.slotID))
     }
 
+    func scheduledSlot(at now: Date = Date()) -> ReminderSlot? {
+        let calendar = Calendar.current
+        let completed = Set(data.checkIns.filter {
+            $0.origin == .scheduled && calendar.isDate($0.completedAt, inSameDayAs: now)
+        }.compactMap(\.slotID))
+        return CheckInWindow.activeSlot(reminders: data.settings.reminders,
+            completedSlotIDs: completed, enrolledAt: data.settings.enrolledAt,
+            studyEndDate: studyEndDate, now: now, calendar: calendar,
+            preview: .resolve(arguments: ProcessInfo.processInfo.arguments, dataMode: dataMode))
+    }
+
     var nextReminder: ReminderSlot? {
         guard isStudyActive else { return nil }
         return data.settings.reminders.sorted { $0.hour * 60 + $0.minute < $1.hour * 60 + $1.minute }
@@ -125,9 +144,10 @@ final class AppStore {
 
     private func beginNewCheckIn(origin: CheckInOrigin, slotID: String?) {
         let replacingID = savedDraft?.id
-        let validSlot = slotID.map { id in data.settings.reminders.contains { $0.id == id } && !completedSlotIDs.contains(id) } ?? false
-        let resolvedOrigin: CheckInOrigin = origin == .scheduled && validSlot && isStudyActive ? .scheduled : .onDemand
-        let draft = CheckInDraft(id: UUID(), startedAt: Date(), origin: resolvedOrigin,
+        let now = Date()
+        let validSlot = slotID != nil && scheduledSlot(at: now)?.id == slotID
+        let resolvedOrigin: CheckInOrigin = origin == .scheduled && validSlot ? .scheduled : .onDemand
+        let draft = CheckInDraft(id: UUID(), startedAt: now, origin: resolvedOrigin,
                                 slotID: resolvedOrigin == .scheduled ? slotID : nil)
         guard saveDraft(draft) else { return }
         _ = commit { value in
@@ -151,17 +171,18 @@ final class AppStore {
         } catch { persistenceError = "Your answers could not be saved. Please try again. \(error.localizedDescription)"; return false }
     }
 
-    func submitCheckIn(_ draft: CheckInDraft) -> CheckInRecord? {
+    func submitCheckIn(_ draft: CheckInDraft, completedAt now: Date = Date()) -> CheckInRecord? {
         if let existing = data.checkIns.first(where: { $0.id == draft.id }) { return existing }
         do {
             let answers = try draft.answers()
             let recommended = try RuleEngine(configuration: configuration).recommend(for: answers)
-            let now = Date()
             let isSameDay = Calendar.current.isDate(draft.startedAt, inSameDayAs: now)
-            let duplicateSlot = todayCheckIns.contains { $0.origin == .scheduled && $0.slotID == draft.slotID }
-            // A resumed draft from yesterday never counts toward today's scheduled adherence.
-            let validSlot = data.settings.reminders.contains { $0.id == draft.slotID }
-            let origin: CheckInOrigin = isSameDay && !duplicateSlot && validSlot && isStudyActive ? draft.origin : .onDemand
+            // Retain answers from late or resumed drafts as extra check-ins. A scheduled
+            // response must both start and finish within its original one-hour window.
+            let validSlot = draft.slotID != nil
+                && scheduledSlot(at: draft.startedAt)?.id == draft.slotID
+                && scheduledSlot(at: now)?.id == draft.slotID
+            let origin: CheckInOrigin = isSameDay && validSlot ? draft.origin : .onDemand
             let record = CheckInRecord(id: draft.id, participantID: data.settings.participantID,
                 startedAt: draft.startedAt, completedAt: now, timezoneID: TimeZone.current.identifier,
                 origin: origin, slotID: origin == .scheduled ? draft.slotID : nil, answers: answers,

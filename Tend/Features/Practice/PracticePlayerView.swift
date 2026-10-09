@@ -5,6 +5,7 @@ struct PracticePlayerView: View {
     let checkInID: UUID?
     let entrySource: PracticeEntrySource
     let previousSessionID: UUID?
+    let onCompleted: ((UUID) -> Void)?
     @Environment(AppStore.self) private var store
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
@@ -18,11 +19,13 @@ struct PracticePlayerView: View {
     @ScaledMetric(relativeTo: .largeTitle) private var phaseSize = 36
 
     init(practice: Practice, checkInID: UUID?, audioEnabled: Bool,
-         entrySource: PracticeEntrySource? = nil, previousSessionID: UUID? = nil) {
+         entrySource: PracticeEntrySource? = nil, previousSessionID: UUID? = nil,
+         onCompleted: ((UUID) -> Void)? = nil) {
         self.practice = practice
         self.checkInID = checkInID
         self.entrySource = entrySource ?? (checkInID == nil ? .library : .recommendation)
         self.previousSessionID = previousSessionID
+        self.onCompleted = onCompleted
         _player = State(initialValue: PracticePlayerModel(practice: practice, audioEnabled: audioEnabled))
     }
 
@@ -121,6 +124,8 @@ struct PracticePlayerView: View {
                         ForEach(Array(practice.steps.enumerated()), id: \.offset) { index, step in
                             Text("\(index + 1). \(step)").font(.body)
                         }
+                        Label("Stop if uncomfortable", systemImage: "heart")
+                            .font(.subheadline).foregroundStyle(TendTheme.secondary)
                     }
                     .padding(.top, 8)
                 }
@@ -156,8 +161,6 @@ struct PracticePlayerView: View {
             Toggle(isOn: Binding(get: { player.audioEnabled }, set: { player.setAudioEnabled($0) })) {
                 Label("Spoken guide", systemImage: "speaker.wave.2")
             }.tint(TendTheme.forest).accessibilityIdentifier("practice.voice")
-            Text("A short introduction, followed by quiet practice.")
-                .font(.subheadline).foregroundStyle(TendTheme.secondary)
             if let audioError = player.audioError {
                 Text(audioError).font(.subheadline).foregroundStyle(TendTheme.secondary)
             }
@@ -184,10 +187,12 @@ struct PracticePlayerView: View {
     }
 
     private func beginFeedback() {
+        guard !didSave else { return }
         player.stop()
         let session = makeSession(completed: true)
         if store.recordSession(session) {
             didSave = true
+            onCompleted?(session.id)
             feedback = session
         } else {
             saveError = "Couldn't save your completed practice. Your timer is paused; please tap Finish practice to try again."

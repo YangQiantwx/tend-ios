@@ -3,15 +3,15 @@
 Tend is a native SwiftUI iOS demo for brief wellbeing check-ins and guided movement or mindfulness practices. It stores records as local JSON and runs without an account or server.
 
 <p>
-  <img src="docs/images/today.png" width="280" alt="Today with three scheduled check-ins, an extra check-in, saved options, and practice categories">
-  <img src="docs/images/journey.png" width="280" alt="Journey with weekly progress and a 28-day ratings chart that leaves missing days empty">
+  <img src="docs/images/today.png" width="280" alt="Today with one Check in action, an extra check-in, saved options, and practice categories">
+  <img src="docs/images/journey.png" width="280" alt="Journey with a visual before-and-after distress comparison and compact history entries">
 </p>
 
-Screenshots use the isolated demo mode with illustrative records. They show the start of a walkthrough and the history after two one-minute practices.
+Screenshots use the isolated demo mode with illustrative records. They show the start of a walkthrough and illustrative history.
 
 ## What you can do
 
-- Complete three scheduled check-ins each day, or start an extra check-in. Six questions cover distress, willingness, fatigue, pain, physical function, and available time.
+- Start a scheduled check-in during its one-hour reminder window (default local times: 10:00, 14:00, and 18:00), or start an extra check-in. Six questions cover distress, willingness, fatigue, pain, physical function, and available time.
 - Choose from a movement option and a mindfulness option. Save suggestions for later, bookmark practices, skip, or repeat a previous practice.
 - Follow written steps and spoken guides with a pausable timer. Completion is self-reported; helpfulness ratings and notes are optional.
 - Explore daily ratings and practice history in Journey. Charts distinguish scheduled and extra check-ins and leave missing observations empty.
@@ -60,11 +60,7 @@ The first demo launch creates sample history relative to the current date. Later
 
 For Xcode launches, add `--demo` under **Edit Scheme → Run → Arguments**. Add `--reset-demo-data` for one launch only when you want fresh sample history, then remove it. Remove both arguments to return to ordinary app data. These options are available only in Debug builds. Demo and UI test modes do not schedule system notifications; reminder preferences can still be saved locally.
 
-## Run with Codex
-
-Open this checkout in Codex and paste:
-
-> Read README.md, check the installed Xcode and available iPhone Simulators, then build and open Tend using scripts/run_demo.sh. Preserve existing app and demo data. Use installed tools and runtimes; do not install large tools, enable paid services, or publish to the App Store. If signing, Xcode selection, or a missing runtime blocks the run, report the specific error and the smallest setup step needed.
+To preview the two home states, use `scripts/run_demo.sh --window-open` or `scripts/run_demo.sh --window-closed`. Add `--reset` to start a fresh walkthrough. These Debug-only overrides affect the isolated demo window, not the system clock or ordinary records. Without an override, Check in is available for one hour after a reminder; Extra check-in remains available at other times. After completing the preview check-in, Today returns to its quiet state.
 
 ## Tests
 
@@ -87,21 +83,21 @@ The UI tests use a separate `UITests` data directory. Their reset option does no
 
 ## Demo walkthrough
 
-1. Demo mode opens on **Today**. An ordinary first launch starts with welcome screens; complete those first. Open a scheduled check-in and answer all six questions to see the two suggested practices.
+1. Demo mode opens on **Today**. An ordinary first launch starts with welcome screens; complete those first. During a one-hour reminder window, tap **Check in** and answer all six questions to see the two suggested practices.
 2. Choose **Save for later**, return to Today, and reopen the suggestion from **Saved for later**. Suggestions expire after one hour in this demo; bookmarked practices remain saved.
 3. Start a practice. Try pause and resume, then end it and record whether you completed it. Leave feedback blank or add a rating and note. Complete another practice from the same check-in to demonstrate both options.
-4. Open **Journey** to inspect the new records, chart selections, and repeat-practice action.
+4. Open **Journey** to explore the charts and Before / After distress comparison. Under **History**, open **Check-in history** and choose **Week**, **Month**, or **All**. Records are grouped by date and identify Morning, Afternoon, Evening, or Extra. Use **Practice history** for previous practices and reflections.
 5. Open **Settings → Fitbit**, connect the demo, and sync sample data. Disconnect to show the connection state change.
-6. Open **Q&A → Ask the study team**. Write and save a message, reopen it, edit it, and try Share. Saving does not send a message; the system share sheet lets you choose a destination.
+6. Open **Settings → Q&A → Ask the study team**. Write and save a message, reopen it, edit it, and try Share. Saving does not send a message; the system share sheet lets you choose a destination.
 7. Open **Settings → Study data & export** to inspect and share a JSON snapshot.
 
-Choose **28 days** in Journey to show the sample history. **This week** runs Monday–Sunday and contains only elapsed days; on Monday it may show one observed day. Start a new check-in before demonstrating **Save for later**, so the one-hour window is current. Practice completion is a deliberate self-report, and the recorded duration always reflects time actually spent with the foreground timer running.
+Journey opens on **28 days** to show the sample history. **This week** runs Monday–Sunday; its summary counts elapsed days, and future dates have no observations. Start a new check-in before demonstrating **Save for later**, so the one-hour window is current. Practice completion is a deliberate self-report, and the recorded duration always reflects time actually spent with the foreground timer running.
 
 ## Data and configuration
 
 `Tend/Resources/study-config.json` defines the reminder defaults, practice content, durations, and provisional suggestion rules. Changes are validated before loading. Existing reminder choices are retained when defaults change.
 
-The app saves committed records to `study-data.json` and unfinished check-ins to `check-in-draft.json` inside its application container. Writes are atomic; the UI updates after a successful save. Exports contain the configuration, stored records, and a derived analysis snapshot with ISO 8601 timestamps. Draft answers remain separate from completed check-ins.
+The app saves committed records to `study-data.json` and unfinished check-ins to `check-in-draft.json` inside its application container. Writes are atomic; the UI updates after a successful save. Exports contain the configuration, stored records, and a derived analysis snapshot with ISO 8601 timestamps. Draft answers remain separate from completed check-ins. Answers resumed after their scheduled window remain available; submitting them saves an extra check-in and does not count as an on-time scheduled response.
 
 Records and support messages remain on the device. **Share JSON export** and **Share message** open the system share sheet; the chosen destination controls what happens next. Tend has no analytics uploader or background account service. Uninstalling the app removes its local container, so export records you need to keep first.
 
@@ -137,6 +133,8 @@ The analysis preview uses seven preceding calendar days of scheduled responses t
 | Export | `StudyExport.write(to:) throws` validates the configuration and data and atomically writes the full JSON snapshot. `AppStore.exportURL()` prepares the file used by the share sheet. |
 
 Real wearable synchronization needs an authorized Fitbit application and a provider that maps readings into `WearableDay` while retaining missing values, dates, and provenance. Support delivery needs an approved recipient/service and explicit sent, failed, and reply states; local save success must remain distinct from delivery. Neither integration currently makes network requests. Approved practice media and final study rules can replace the bundled configuration and recordings without replacing the UI flow; update the narration manifest when scripts change.
+
+Guides play at 0.75× speed; the practice timer continues at real elapsed time. After feedback, **Back to Today** returns home and keeps any remaining valid suggestion in Saved for later.
 
 ## Audio and licensing
 

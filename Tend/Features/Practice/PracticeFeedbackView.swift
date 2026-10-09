@@ -36,7 +36,7 @@ struct PracticeFeedbackView: View {
                             .font(.system(size: 24, weight: .light)).foregroundStyle(TendTheme.forest)
                             .frame(width: 56, height: 56).background(TendTheme.sage, in: Circle())
                     }
-                    Text(allowPostDistress ? "Congratulations!" : "Your reflection")
+                    Text(allowPostDistress ? "Practice complete" : "Your reflection")
                         .font(TendTheme.display(titleSize)).multilineTextAlignment(.center)
                         .accessibilityAddTraits(.isHeader)
                     Text(practice.title)
@@ -46,16 +46,16 @@ struct PracticeFeedbackView: View {
                 rating
                 if showsPostDistress { distressRating }
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Anything to add?").font(.headline)
-                    TextField("Questions, difficulties, or suggestions (optional)", text: $note, axis: .vertical)
-                        .lineLimit(3...6).padding(16)
+                    Text("Add a note").font(.headline)
+                    TextField("Optional", text: $note, axis: .vertical)
+                        .lineLimit(2...4).padding(16)
                         .background(TendTheme.surface, in: RoundedRectangle(cornerRadius: 16))
                         .overlay(RoundedRectangle(cornerRadius: 16).stroke(TendTheme.line, lineWidth: 1))
                         .focused($noteFocused)
                         .accessibilityLabel("Optional practice note")
                         .accessibilityIdentifier("feedback.note")
                 }
-                Text("All feedback is optional. Your practice still counts.")
+                Text("Feedback is optional.")
                     .font(.subheadline).foregroundStyle(TendTheme.secondary)
                 if let saveError {
                     Label(saveError, systemImage: "exclamationmark.circle")

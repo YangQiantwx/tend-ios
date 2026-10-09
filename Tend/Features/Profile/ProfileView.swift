@@ -187,6 +187,12 @@ struct ProfileView: View {
         VStack(alignment: .leading, spacing: 0) {
             SectionHeading(title: "Help")
                 .padding(.bottom, 8)
+            NavigationLink { LearningNoteView() } label: {
+                settingsRow("Learn about stress", symbol: "book.closed")
+            }
+            .buttonStyle(.plain)
+            .accessibilityIdentifier("profile.learn")
+            Divider().overlay(TendTheme.line)
             NavigationLink { FrequentlyAskedQuestionsView() } label: {
                 settingsRow("Q&A", symbol: "questionmark.bubble")
             }

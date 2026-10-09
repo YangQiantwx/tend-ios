@@ -1,22 +1,17 @@
 import SwiftUI
 
-struct QandATabView: View {
-    var body: some View {
-        NavigationStack { FrequentlyAskedQuestionsView() }
-    }
-}
-
 struct FrequentlyAskedQuestionsView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var expandedQuestion: Int?
 
     private let questions: [(String, String)] = [
-        ("Can I change my check-in times?", "Yes. Open Settings → Reminder times."),
-        ("Can I check in at another time?", "Yes. Tap Extra check-in on Today. It does not count toward the three scheduled check-ins."),
+        ("When can I check in?", "The Check in button appears for one hour after each reminder. You can change these times in Settings → Reminder times."),
+        ("Can I check in at another time?", "Yes. Tap Extra check-in on Today whenever it suits you."),
         ("Where are my saved options?", "Open Today → Saved for later. Check-in options last one hour in this demo; bookmarked practices stay saved."),
         ("Is Fitbit connected?", "No real Fitbit is connected. Open Settings → Fitbit to try a demo connection and sync clearly labeled sample data. Fitbit never chooses practices."),
         ("Where are my records?", "Your records are on this device. Open Settings → Study data & export."),
-        ("What does the Journey line show?", "Each point averages ratings recorded that day. The line stops where a day has no rating.")
+        ("What does the Journey line show?", "Each point averages ratings recorded that day. The line stops where a day has no rating."),
+        ("What do Before and After mean?", "These are your distress ratings, from 1 to 5. Before is recorded at check-in; After is recorded after practice. Lower scores mean less distress. Helpfulness is a separate rating.")
     ]
 
     var body: some View {
@@ -36,6 +31,7 @@ struct FrequentlyAskedQuestionsView: View {
                                     .font(.subheadline).foregroundStyle(TendTheme.secondary)
                             }
                             .frame(minHeight: 56, alignment: .leading)
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
                         .accessibilityIdentifier("qa.question.\(index)")

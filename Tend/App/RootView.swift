@@ -14,9 +14,8 @@ struct RootView: View {
             if store.data.settings.onboardingComplete {
                 TabView(selection: $selectedTab) {
                     HomeView(focusPractices: $focusPractices, openSaved: $openSaved)
+                        .id(store.homeNavigationID)
                         .tabItem { Label("Today", systemImage: "sun.horizon") }.tag(0)
-                    QandATabView()
-                        .tabItem { Label("Q&A", systemImage: "questionmark.bubble") }.tag(1)
                     JourneyView().tabItem { Label("Journey", systemImage: "chart.xyaxis.line") }.tag(2)
                     ProfileView().tabItem { Label("Settings", systemImage: "gearshape") }.tag(3)
                 }
@@ -37,7 +36,13 @@ struct RootView: View {
             set: { if !$0 { store.pendingCheckInRequest = nil } }), titleVisibility: .visible,
                             presenting: store.pendingCheckInRequest) { request in
                 Button("Resume saved check-in") { store.resumeSavedCheckIn() }
-                Button("Discard and start a new check-in", role: .destructive) { store.replaceDraftAndStartCheckIn(request: request) }
+                Button("Discard and start a new check-in", role: .destructive) {
+                    let slot = store.scheduledSlot()
+                    let stillScheduled = request.origin == .scheduled && slot?.id == request.slotID
+                    store.replaceDraftAndStartCheckIn(request: CheckInRequest(
+                        origin: stillScheduled ? .scheduled : .onDemand,
+                        slotID: stillScheduled ? request.slotID : nil))
+                }
                 Button("Cancel", role: .cancel) { store.pendingCheckInRequest = nil }
         } message: { _ in
             if let draft = store.savedDraft {
@@ -64,6 +69,11 @@ struct RootView: View {
         }
         .onChange(of: store.isPracticePresented) { _, isPresented in
             if !isPresented { consumePendingReminder(); consumePendingSaved() }
+        }
+        .onChange(of: store.homeNavigationID) { _, _ in
+            focusPractices = false
+            openSaved = false
+            selectedTab = 0
         }
         .onReceive(NotificationCenter.default.publisher(for: .tendReminderOpened)) { _ in
             consumePendingReminder()

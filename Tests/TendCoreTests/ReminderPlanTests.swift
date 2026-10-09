@@ -86,7 +86,7 @@ final class ReminderPlanTests: XCTestCase {
 
     func testStaleUnknownFutureDuplicateAndPostStudyRoutesBecomeOnDemand() throws {
         let enrolled = date(2026, 9, 8, 0)
-        let now = date(2026, 9, 9, 12)
+        let now = date(2026, 9, 9, 10).addingTimeInterval(30 * 60)
         let end = try XCTUnwrap(calendar.date(byAdding: .day, value: 56, to: enrolled))
         func eligible(_ route: ReminderRoute, completed: Set<String> = [], at time: Date? = nil) -> String? {
             route.eligibleSlotID(reminders: slots, completedSlotIDs: completed, enrolledAt: enrolled,
@@ -94,6 +94,9 @@ final class ReminderPlanTests: XCTestCase {
         }
         let current = ReminderRoute(slotID: "morning", occurrenceDate: date(2026, 9, 9, 10))
         XCTAssertEqual(eligible(current), "morning")
+        XCTAssertEqual(eligible(current, at: date(2026, 9, 9, 10)), "morning")
+        XCTAssertNil(eligible(current, at: date(2026, 9, 9, 11)))
+        XCTAssertNil(eligible(current, at: date(2026, 9, 9, 12)))
         XCTAssertNil(eligible(current, completed: ["morning"]))
         XCTAssertNil(eligible(current, at: end))
         XCTAssertNil(eligible(ReminderRoute(slotID: "morning", occurrenceDate: date(2026, 9, 8, 10))))

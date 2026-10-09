@@ -44,8 +44,8 @@ struct ReminderRoute: Codable, Identifiable, Equatable, Sendable {
     let occurrenceDate: Date?
     var openedAt: Date? = Date()
 
-    /// This guards provenance, not a clinical response window. Final study response
-    /// windows remain pending; a stale or unknown notification opens on-demand support.
+    /// A stale, unknown, or expired notification opens on-demand support.
+    /// The response window is one hour from the scheduled occurrence.
     func eligibleSlotID(reminders: [ReminderSlot], completedSlotIDs: Set<String>,
                         enrolledAt: Date, studyEndDate: Date, now: Date = Date(),
                         calendar: Calendar = .current) -> String? {
@@ -53,7 +53,8 @@ struct ReminderRoute: Codable, Identifiable, Equatable, Sendable {
               !completedSlotIDs.contains(slotID), let occurrenceDate,
               now >= enrolledAt, now < studyEndDate,
               occurrenceDate >= enrolledAt, occurrenceDate < studyEndDate,
-              occurrenceDate <= now, calendar.isDate(occurrenceDate, inSameDayAs: now) else { return nil }
+              CheckInWindow.contains(now, startingAt: occurrenceDate),
+              calendar.isDate(occurrenceDate, inSameDayAs: now) else { return nil }
         return slotID
     }
 }

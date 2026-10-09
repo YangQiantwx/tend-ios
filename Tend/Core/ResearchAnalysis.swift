@@ -145,7 +145,7 @@ private struct ResearchAnalysisBuilder {
             sourceVersion: "demo-analysis-v1", sourceParagraphs: [],
             sourceConflict: "Demo schedule: week 1 builds history, weeks 2–6 are the development period, and weeks 7–8 are held out. These are demo analysis conventions, not model-validation results.",
             limitations: [
-                "Observed labels only, not AI predictions, model evaluation, clinical assessment, or intervention rules.",
+                "Observed labels only, not model predictions or evaluation, clinical assessment, or intervention rules.",
                 "The historical window is [completion time minus 7 calendar days, completion time); current and future answers are excluded.",
                 "A transition freezes the current decision's historical median for both endpoints. Later answers and samples expiring before the next EMA cannot change that target threshold. Each standalone EMA label describes its own preceding history.",
                 "Labels remain unknown until 7 full calendar days after enrollment. No minimum observation count is invented; empty windows remain unknown and every sample count is reported.",
@@ -154,7 +154,7 @@ private struct ResearchAnalysisBuilder {
                 "Only adjacent reminder slots within a day are paired. Missing slots, unknown labels, non-chronological responses, and an already-elevated current state are not negative outcomes.",
                 "Actual observed intervals between decision points are exported without imposing an exclusion tolerance.",
                 "Warm-up and phase boundaries use calendar-day anniversaries of actual enrollment. The administrative end matches the app schedule: the local start of the enrollment day plus 56 days or the configured duration, whichever is shorter.",
-                "Prompt times represent planned opportunities, not verified notification delivery. Sensitivity definitions and AI training are not implemented."
+                "Prompt times represent planned opportunities, not verified notification delivery. Sensitivity definitions and model training are not implemented."
             ],
             generatedAt: now, calendarIdentifier: String(describing: calendar.identifier),
             timezoneID: calendar.timeZone.identifier, orderedSlots: slots,

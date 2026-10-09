@@ -10,6 +10,7 @@ final class PracticeNarrationPlayer: NSObject, AVAudioPlayerDelegate, AVSpeechSy
     var onError: ((String) -> Void)?
     var onInterruption: (() -> Void)?
 
+    private static let playbackRate: Float = 0.75
     private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "org.tend.app", category: "Narration")
     private let script: String
     private let audioURL: URL?
@@ -81,6 +82,8 @@ final class PracticeNarrationPlayer: NSObject, AVAudioPlayerDelegate, AVSpeechSy
                 do {
                     let player = try AVAudioPlayer(contentsOf: audioURL)
                     player.delegate = self
+                    player.enableRate = true
+                    player.rate = Self.playbackRate
                     guard player.prepareToPlay() else { throw NarrationError.cannotPrepare }
                     recording = player
                 } catch {
@@ -109,7 +112,7 @@ final class PracticeNarrationPlayer: NSObject, AVAudioPlayerDelegate, AVSpeechSy
         } else if !hasSpoken {
             let utterance = AVSpeechUtterance(string: script)
             utterance.voice = AVSpeechSynthesisVoice(language: "en-US")
-            utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.83
+            utterance.rate = AVSpeechUtteranceDefaultSpeechRate * Self.playbackRate
             synthesizer.speak(utterance)
             hasSpoken = true
         }

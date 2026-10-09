@@ -2,20 +2,21 @@ import XCTest
 
 extension TendUITests {
     @MainActor func testOceanThemeLearnAndAccountHelp() {
-        launchFreshApp()
+        launchFreshApp(window: "open")
         onboard()
         XCTAssertTrue(app.buttons["home.scheduled.morning"].isHittable)
         XCTAssertTrue(app.buttons["home.checkIn"].exists)
         capture("deep-01-scheduled-first")
 
-        tap(app.buttons["today.learn"])
+        selectTab("Settings")
+        tap(app.buttons["profile.learn"])
         XCTAssertTrue(app.staticTexts["Stress, mind, and body"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.links["NIMH: Stress and anxiety"].exists)
         capture("deep-02-learning-preview")
 
-        selectTab("Settings")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
         let ocean = app.buttons["profile.colorTheme.ocean"]
-        reveal(ocean)
+        reveal(ocean, direction: .down)
         XCTAssertTrue(ocean.isSelected)
         tap(app.buttons["profile.colorTheme.forest"])
         let forest = app.buttons["profile.colorTheme.forest"]
@@ -46,8 +47,8 @@ extension TendUITests {
         tap(app.buttons["options.done"])
 
         selectTab("Journey")
-        XCTAssertTrue(labelContaining("Recent before and after · demo").waitForExistence(timeout: 5))
-        XCTAssertTrue(labelContaining("After practice, 2 / 5").waitForExistence(timeout: 5))
+        XCTAssertTrue(labelContaining("Distress").waitForExistence(timeout: 5))
+        XCTAssertTrue(labelContaining("after practice 2 of 5").waitForExistence(timeout: 5))
         let pair = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "journey.distressPair.")).firstMatch
         for _ in 0..<8 where !pair.isHittable {
             let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.8))
@@ -114,6 +115,7 @@ extension TendUITests {
         // Deliberately terminate before Done. The completion must already be durable.
         relaunchKeepingData()
         selectTab("Journey")
+        openPracticeHistory()
         tap(app.staticTexts["Mindful breathing"])
         XCTAssertTrue(labelContaining("Not rated").waitForExistence(timeout: 5))
         tap(app.buttons["journey.feedback"])
@@ -123,6 +125,7 @@ extension TendUITests {
         capture("refresh-03-completion-survived-with-later-feedback")
         relaunchKeepingData()
         selectTab("Journey")
+        openPracticeHistory()
         tap(app.staticTexts["Mindful breathing"])
         XCTAssertTrue(labelContaining("Helpfulness, 4 of 5").waitForExistence(timeout: 5))
     }
@@ -130,7 +133,7 @@ extension TendUITests {
     @MainActor func testInteractiveChartsDayDetailsAndFullHistory() {
         launchJourneyFixture()
         selectTab("Journey")
-        XCTAssertTrue(app.staticTexts["Illustrative test data"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Test history"].waitForExistence(timeout: 5))
         tap(app.segmentedControls["journey.chartKind"].buttons["Check-ins"])
         tap(app.segmentedControls["journey.range"].buttons["28 days"])
         XCTAssertTrue(app.segmentedControls["journey.range"].buttons["28 days"].isSelected)
@@ -163,15 +166,62 @@ extension TendUITests {
         tap(app.segmentedControls["journey.chartKind"].buttons["Ratings"])
         reveal(app.buttons["journey.selectedRatingDay"])
         capture("refresh-07-original-ema-ratings")
+        XCTAssertFalse(app.staticTexts["Recent check-ins"].exists)
+        XCTAssertFalse(app.staticTexts["Recent practices"].exists)
         tap(app.buttons["journey.allCheckIns"])
-        tap(app.buttons["history.checkInFilter"])
-        tap(app.buttons["On demand"])
-        XCTAssertTrue(app.staticTexts["No check-ins here yet"].waitForExistence(timeout: 5))
-        tap(app.buttons["history.checkInFilter"])
-        tap(app.buttons["All"])
+        XCTAssertTrue(app.navigationBars["Check-ins"].waitForExistence(timeout: 5))
+        let period = app.segmentedControls["history.period"]
+        XCTAssertTrue(period.buttons["All"].isSelected)
+        XCTAssertFalse(app.buttons["history.previousPeriod"].exists)
+        for slot in ["Morning", "Afternoon", "Evening"] {
+            let namedRecord = app.buttons.matching(NSPredicate(
+                format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@",
+                "journey.checkin.", "\(slot) check-in,")).firstMatch
+            revealResearchList(namedRecord)
+            XCTAssertTrue(namedRecord.exists, "History identifies the original \(slot.lowercased()) slot.")
+        }
+        revealResearchList(period, direction: .down)
+        period.buttons["Month"].tap()
+        XCTAssertTrue(period.buttons["Month"].isSelected)
+        let periodTitle = app.staticTexts["history.periodTitle"]
+        XCTAssertTrue(periodTitle.waitForExistence(timeout: 5))
+        let previousPeriod = app.buttons["history.previousPeriod"]
+        let nextPeriod = app.buttons["history.nextPeriod"]
+        XCTAssertEqual(previousPeriod.label, "Previous month")
+        XCTAssertFalse(nextPeriod.isEnabled, "The latest recorded month cannot advance into an empty future.")
+        let latestMonth = periodTitle.label
+        // The relative thirteen-day fixture crosses a month only near its start.
+        if previousPeriod.isEnabled {
+            previousPeriod.tap()
+            XCTAssertNotEqual(periodTitle.label, latestMonth)
+            XCTAssertTrue(nextPeriod.isEnabled)
+            nextPeriod.tap()
+            XCTAssertEqual(periodTitle.label, latestMonth)
+        }
+        // Changing the period returns to the latest recorded week.
+        period.buttons["Week"].tap()
+        XCTAssertTrue(period.buttons["Week"].isSelected)
+        XCTAssertEqual(previousPeriod.label, "Previous week")
+        XCTAssertTrue(previousPeriod.isEnabled)
+        XCTAssertFalse(nextPeriod.isEnabled)
+        let latestWeek = periodTitle.label
+        let latestRecord = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "journey.checkin.")).firstMatch
+        let latestRecordID = latestRecord.identifier
+        previousPeriod.tap()
+        XCTAssertNotEqual(periodTitle.label, latestWeek)
+        XCTAssertNotEqual(latestRecord.identifier, latestRecordID, "Moving weeks changes the visible records.")
+        XCTAssertTrue(nextPeriod.isEnabled)
+        nextPeriod.tap()
+        XCTAssertEqual(periodTitle.label, latestWeek)
+        XCTAssertEqual(latestRecord.identifier, latestRecordID)
+        capture("history-week-navigation")
+        period.buttons["All"].tap()
+        XCTAssertTrue(period.buttons["All"].isSelected)
+        XCTAssertFalse(previousPeriod.exists)
         let record = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "journey.checkin.")).firstMatch
         revealResearchList(record)
         record.tap()
+        XCTAssertTrue(app.navigationBars["Your check-in"].waitForExistence(timeout: 5))
         let suggestion = app.buttons["journey.recommendation.mindful-breathing"]
         if suggestion.exists {
             revealResearchList(suggestion)

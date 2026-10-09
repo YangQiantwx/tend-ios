@@ -4,20 +4,24 @@ set -euo pipefail
 
 usage() {
     cat <<'USAGE'
-Usage: scripts/run_demo.sh [--reset] [SIMULATOR_UDID]
+Usage: scripts/run_demo.sh [--reset] [--window-open|--window-closed] [SIMULATOR_UDID]
 
 Build and run Tend with sample history. By default, reuse a booted iPhone
 Simulator or choose the first available iPhone. No runtime is downloaded.
 --reset recreates only the sample records, relative to today's date.
 Omit --reset to keep changes from earlier demonstrations.
+--window-open previews an available check-in; --window-closed previews quiet time.
 USAGE
 }
 
 reset_demo=false
+window_argument=""
 device_id=""
 for argument in "$@"; do
     case "$argument" in
         --reset) reset_demo=true ;;
+        --window-open) window_argument=--demo-window-open ;;
+        --window-closed) window_argument=--demo-window-closed ;;
         --help|-h) usage; exit 0 ;;
         --*) printf 'Unknown option: %s\n' "$argument" >&2; usage >&2; exit 2 ;;
         *)
@@ -92,6 +96,7 @@ fi
 # A currently running app must restart to switch its data directory.
 /usr/bin/xcrun simctl terminate "$device_id" org.tend.app >/dev/null 2>&1 || true
 launch_arguments=(--demo)
+if [[ -n "$window_argument" ]]; then launch_arguments+=("$window_argument"); fi
 if [[ "$reset_demo" == true ]]; then launch_arguments+=(--reset-demo-data); fi
 /usr/bin/xcrun simctl launch "$device_id" org.tend.app "${launch_arguments[@]}"
 printf 'Tend is open in sample-data mode. Ordinary records are preserved.\n'

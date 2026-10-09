@@ -18,7 +18,7 @@ extension TendUITests {
         XCTAssertTrue(label("Demo connection, Active").exists)
         XCTAssertTrue(label("Real Fitbit, Not connected").exists)
 
-        selectTab("Q&A")
+        openQuestions()
         tap(app.buttons["qa.contact"])
         tap(app.buttons["support.compose"])
         XCTAssertFalse(app.buttons["support.saveRequest"].isEnabled)
@@ -90,7 +90,7 @@ extension TendUITests {
     @MainActor func testLocalSupportDraftEditAndShare() {
         launchFreshApp()
         onboard()
-        selectTab("Q&A")
+        openQuestions()
         tap(app.buttons["qa.technicalSupport"])
         app.buttons["support.compose"].tap()
         let subject = app.textFields["support.subject"]
@@ -108,7 +108,7 @@ extension TendUITests {
         XCTAssertTrue(row.label.contains("Draft"))
 
         relaunchKeepingData()
-        selectTab("Q&A")
+        openQuestions()
         tap(app.buttons["qa.technicalSupport"])
         XCTAssertTrue(row.waitForExistence(timeout: 5))
         row.tap()
@@ -132,7 +132,7 @@ extension TendUITests {
     @MainActor func testStudyTeamCanSaveQuestionWithoutSubject() {
         launchFreshApp()
         onboard()
-        selectTab("Q&A")
+        openQuestions()
         tap(app.buttons["qa.contact"])
         app.buttons["support.compose"].tap()
         let message = app.textViews["support.message"]

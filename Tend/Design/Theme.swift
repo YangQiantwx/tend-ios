@@ -18,7 +18,7 @@ enum TendTheme {
         TendPalette(rawValue: UserDefaults.standard.string(forKey: palettePreferenceKey) ?? "") ?? .ocean
     }
 
-    static var paper: Color { themed(0xF7F5EF, 0x171E1B, 0xEFF8F8, 0x0B2029) }
+    static var paper: Color { themed(0xF7F5EF, 0x171E1B, 0xF3F8FA, 0x0B2029) }
     static var surface: Color { themed(0xFFFEFA, 0x232E28, 0xFFFFFF, 0x16323D) }
     static var ink: Color { themed(0x203C32, 0xF1F3E9, 0x123D50, 0xECF9FA) }
     static var secondary: Color { themed(0x5A6B60, 0xB5C3B6, 0x506E79, 0xB2CDD4) }
@@ -34,7 +34,28 @@ enum TendTheme {
     static var sea: Color { themed(0x416950, 0xA1C5AF, 0x006E70, 0x71D7CC) }
 
     static func display(_ size: CGFloat) -> Font {
-        .system(size: size, weight: .regular, design: .serif)
+        .system(size: size, weight: .semibold, design: .default)
+    }
+
+    @MainActor static func configureTabTypography() {
+        let font = UIFontMetrics(forTextStyle: .subheadline)
+            .scaledFont(for: .systemFont(ofSize: 15, weight: .medium), maximumPointSize: 20)
+        let selectedFont = UIFontMetrics(forTextStyle: .subheadline)
+            .scaledFont(for: .systemFont(ofSize: 15, weight: .semibold), maximumPointSize: 20)
+        let appearance = UITabBarAppearance()
+        for layout in [appearance.stackedLayoutAppearance,
+                       appearance.inlineLayoutAppearance,
+                       appearance.compactInlineLayoutAppearance] {
+            layout.normal.titleTextAttributes = [.font: font]
+            layout.normal.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: 2)
+            layout.selected.titlePositionAdjustment = UIOffset(horizontal: 0, vertical: 2)
+            layout.selected.titleTextAttributes = [.font: selectedFont]
+        }
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+        UITabBarItem.appearance().imageInsets = UIEdgeInsets(top: -2, left: 0, bottom: 2, right: 0)
+        UITabBarItem.appearance().setTitleTextAttributes([.font: font], for: .normal)
+        UITabBarItem.appearance().setTitleTextAttributes([.font: selectedFont], for: .selected)
     }
 
     private static func themed(_ forestLight: UInt, _ forestDark: UInt,

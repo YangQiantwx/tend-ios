@@ -13,10 +13,10 @@ struct HomeView: View {
             ScrollViewReader { proxy in
                 GeometryReader { viewport in
                     ScrollView {
-                        VStack(alignment: .leading, spacing: viewport.size.height < 650 ? 12 : 16) {
+                        VStack(alignment: .leading, spacing: viewport.size.height < 650 ? 16 : 24) {
                             HStack(alignment: .center, spacing: 20) {
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("tend").font(.subheadline.weight(.semibold))
+                                    Text("tend").font(.subheadline.weight(.semibold)).tracking(1)
                                         .foregroundStyle(TendTheme.forest)
                                     Text("Today").font(TendTheme.display(titleSize))
                                         .accessibilityAddTraits(.isHeader)
@@ -29,12 +29,11 @@ struct HomeView: View {
                                 }
                             }
                             if store.usesSampleHistory {
-                                Label(store.isDemoMode ? "Illustrative demo data" : "Illustrative test data", systemImage: "flask")
+                                Label(store.isDemoMode ? "Demo" : "Test data", systemImage: "flask")
                                     .font(.footnote.weight(.medium))
                                     .foregroundStyle(TendTheme.secondary)
                                     .accessibilityIdentifier("home.testData")
                             }
-                            ReminderTimeline()
                             DailyCheckInCard()
                             NavigationLink {
                                 SavedView { focusPractices = true }
@@ -57,23 +56,7 @@ struct HomeView: View {
                             .accessibilityIdentifier("today.saved")
                             PracticeDirectorySection().padding(.top, 4)
                                 .id("practiceDirectory")
-                            NavigationLink { LearningNoteView() } label: {
-                                HStack(spacing: 16) {
-                                    Image(systemName: "book.closed")
-                                        .font(.title2)
-                                        .frame(width: 44, height: 44)
-                                        .foregroundStyle(TendTheme.forest)
-                                        .background(TendTheme.sage, in: RoundedRectangle(cornerRadius: 14))
-                                    Text("Learn about stress").font(.body.weight(.semibold))
-                                    Spacer(minLength: 4)
-                                    Image(systemName: "chevron.right").font(.subheadline)
-                                }
-                                .padding(16)
-                                .background(TendTheme.surface, in: RoundedRectangle(cornerRadius: 20))
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityIdentifier("today.learn")
-                            .padding(.bottom, 24)
+                            Color.clear.frame(height: 12)
                         }.frame(maxWidth: 600).padding(.horizontal, 24).padding(.top, 8).frame(maxWidth: .infinity)
                     }
                     .tendScreen().toolbar(.hidden, for: .navigationBar)

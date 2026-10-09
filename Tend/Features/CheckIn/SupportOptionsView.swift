@@ -69,11 +69,11 @@ struct SupportOptionsView: View {
                         }
                         .buttonStyle(PrimaryButtonStyle())
                         .accessibilityIdentifier("options.otherOption")
-                        Button("Back to Today", action: onDone)
+                        Button("Back to Today", action: returnToToday)
                             .font(.subheadline.weight(.medium)).frame(minHeight: 44)
                             .accessibilityIdentifier("options.done")
                     } else if hasCompletion || savedForLater || !optionsAvailable {
-                        Button("Back to Today", action: onDone)
+                        Button("Back to Today", action: returnToToday)
                             .buttonStyle(PrimaryButtonStyle())
                             .accessibilityIdentifier("options.done")
                     }
@@ -83,6 +83,12 @@ struct SupportOptionsView: View {
 
     private func saveForLater() {
         _ = store.saveRecommendation(record)
+    }
+    private func returnToToday() {
+        if hasCompletion, !allCompleted, optionsAvailable {
+            guard store.saveRecommendation(record) else { return }
+        }
+        onDone()
     }
     private func skip() {
         if store.recordEvent(kind: "recommendations_skipped", referenceID: record.id.uuidString) { onDone() }

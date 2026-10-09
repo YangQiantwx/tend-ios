@@ -97,7 +97,14 @@ struct PracticeSessionRecordView: View {
                 LabeledContent("Helpfulness", value: current.helpfulness.map { "\($0) of 5" } ?? "Not rated")
                 if let after = current.postPracticeDistress,
                    let recordedAt = current.postPracticeDistressRecordedAt {
+                    if let checkInID = current.checkInID,
+                       let checkIn = store.data.checkIns.first(where: { $0.id == checkInID }) {
+                        LabeledContent("Distress at check-in", value: "\(checkIn.answers.distress) of 5")
+                    }
                     LabeledContent("After-practice distress", value: "\(after) of 5")
+                    Text("Lower scores mean less distress.")
+                        .font(.subheadline)
+                        .foregroundStyle(TendTheme.secondary)
                     Text("Reported \(recordedAt.formatted(date: .abbreviated, time: .shortened)) · demo question")
                         .font(.subheadline)
                         .foregroundStyle(TendTheme.secondary)

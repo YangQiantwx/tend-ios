@@ -52,15 +52,91 @@ struct AppStoreTests {
         let directory = temporaryDirectory()
         defer { try? FileManager.default.removeItem(at: directory) }
         let store = try AppStore(configuration: loadConfiguration(), directory: directory, dataMode: .uiTesting)
-        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date())!
+        let today = Calendar.current.startOfDay(for: Date())
+        let start = Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: today)!
+        let now = start.addingTimeInterval(15 * 60)
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: start)!
+        var settings = store.data.settings
+        settings.enrolledAt = yesterday
+        #expect(store.updateSettings(settings))
         let old = completeDraft(origin: .scheduled, slotID: "morning", startedAt: yesterday)
-        #expect(store.submitCheckIn(old)?.origin == .onDemand)
+        #expect(store.submitCheckIn(old, completedAt: now)?.origin == .onDemand)
         #expect(store.completedSlotIDs.isEmpty)
-        let first = completeDraft(origin: .scheduled, slotID: "morning")
-        #expect(store.submitCheckIn(first)?.origin == .scheduled)
-        let duplicate = completeDraft(origin: .scheduled, slotID: "morning")
-        #expect(store.submitCheckIn(duplicate)?.origin == .onDemand)
+        let first = completeDraft(origin: .scheduled, slotID: "morning", startedAt: start)
+        #expect(store.submitCheckIn(first, completedAt: now)?.origin == .scheduled)
+        let duplicate = completeDraft(origin: .scheduled, slotID: "morning", startedAt: start)
+        #expect(store.submitCheckIn(duplicate, completedAt: now)?.origin == .onDemand)
         #expect(store.completedSlotIDs == ["morning"])
+    }
+
+    @Test func scheduledSubmissionRequiresOriginalWindowAndKeepsLateAnswers() throws {
+        let today = Calendar.current.startOfDay(for: Date())
+        let start = Calendar.current.date(bySettingHour: 10, minute: 0, second: 0, of: today)!
+        for (startedOffset, completedOffset, expected): (Double, Double, CheckInOrigin) in [
+            (0, 3599, .scheduled), (60, 3600, .onDemand), (-1, 60, .onDemand),
+            (60, 4 * 3600, .onDemand)
+        ] {
+            let directory = temporaryDirectory()
+            defer { try? FileManager.default.removeItem(at: directory) }
+            let configuration = try loadConfiguration()
+            let store = try AppStore(configuration: configuration, directory: directory, dataMode: .uiTesting)
+            var settings = store.data.settings
+            settings.enrolledAt = today.addingTimeInterval(-86_400)
+            #expect(store.updateSettings(settings))
+            let draft = completeDraft(origin: .scheduled, slotID: "morning",
+                                      startedAt: start.addingTimeInterval(startedOffset))
+            #expect(store.saveDraft(draft))
+            let restored = try AppStore(configuration: configuration, directory: directory, dataMode: .uiTesting)
+            let resumed = try #require(restored.savedDraft)
+            let record = try #require(restored.submitCheckIn(resumed,
+                completedAt: start.addingTimeInterval(completedOffset)))
+            #expect(record.origin == expected)
+            #expect(record.slotID == (expected == .scheduled ? "morning" : nil))
+            #expect(record.id == draft.id)
+            #expect(record.answers.distress == draft.ratings["distress"])
+            #expect(record.answers.availableTime == draft.availableTime)
+            #expect(restored.savedDraft == nil)
+        }
+    }
+
+    @Test func newEveningDefaultDoesNotReplaceExistingReminderChoice() throws {
+        let directory = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let configuration = try loadConfiguration()
+        #expect(configuration.prompts.first { $0.id == "evening" }?.hour == 18)
+        let store = try AppStore(configuration: configuration, directory: directory, dataMode: .uiTesting)
+        var settings = store.data.settings
+        let eveningIndex = try #require(settings.reminders.firstIndex { $0.id == "evening" })
+        settings.reminders[eveningIndex].hour = 19
+        settings.reminders[eveningIndex].minute = 15
+        #expect(store.updateSettings(settings))
+        let restored = try AppStore(configuration: configuration, directory: directory, dataMode: .uiTesting)
+        #expect(restored.data.settings.reminders[eveningIndex].hour == 19)
+        #expect(restored.data.settings.reminders[eveningIndex].minute == 15)
+    }
+
+    @Test func savedRecommendationKeepsOriginalExpiryAndRemainingOptionAcrossReload() throws {
+        let directory = temporaryDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let configuration = try loadConfiguration()
+        let store = try AppStore(configuration: configuration, directory: directory, dataMode: .uiTesting)
+        let record = try #require(store.submitCheckIn(completeDraft(origin: .onDemand, slotID: nil)))
+        #expect(record.recommendedPracticeIDs.count == 2)
+        #expect(store.saveRecommendation(record))
+        let original = try #require(store.savedRecommendations.first)
+        var session = completedSession(participantID: store.data.settings.participantID)
+        session.practiceID = record.recommendedPracticeIDs[0]
+        session.checkInID = record.id
+        #expect(store.recordSession(session))
+        #expect(store.saveRecommendation(record))
+        let restored = try AppStore(configuration: configuration, directory: directory, dataMode: .uiTesting)
+        let saved = try #require(restored.savedRecommendations.first)
+        #expect(restored.savedRecommendations.count == 1)
+        #expect(saved.id == original.id)
+        #expect(saved.expiresAt.timeIntervalSince1970.rounded(.down)
+            == record.recommendationExpiresAt.timeIntervalSince1970.rounded(.down))
+        #expect(restored.remainingPractices(for: saved).map(\.id) == [record.recommendedPracticeIDs[1]])
+        #expect(!saved.isAvailable(at: saved.expiresAt))
     }
 
     @Test func duplicateCompletionAndFeedbackUpdateKeepOneSessionAcrossReload() throws {

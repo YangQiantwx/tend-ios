@@ -3,10 +3,11 @@ import XCTest
 final class TendUITests: XCTestCase {
     @MainActor var app: XCUIApplication!
 
-    @MainActor func launchFreshApp() {
+    @MainActor func launchFreshApp(window: String? = nil) {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchArguments = ["--uitesting", "--reset-test-data"]
+        if let window { app.launchArguments.append("--demo-window-\(window)") }
         app.launch()
     }
 
@@ -45,12 +46,12 @@ final class TendUITests: XCTestCase {
     }
 
     @MainActor func testScheduledSlotCanBeOpenedWithoutNotificationPermission() {
-        launchFreshApp()
+        launchFreshApp(window: "open")
         onboard()
         tap(app.buttons["home.scheduled.morning"])
         completeCheckIn(checkBackNavigation: false)
         tap(app.buttons["options.skip"])
-        XCTAssertFalse(app.buttons["home.scheduled.morning"].isEnabled)
+        XCTAssertFalse(app.buttons["home.scheduled.morning"].exists)
         selectTab("Journey")
         assertTodayCounts(scheduled: 1, onDemand: 0)
     }
@@ -83,15 +84,16 @@ final class TendUITests: XCTestCase {
         confirmation.tap()
 
         XCTAssertTrue(app.buttons["feedback.done"].waitForExistence(timeout: 8))
-        XCTAssertTrue(app.staticTexts["All feedback is optional. Your practice still counts."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Feedback is optional."].waitForExistence(timeout: 5))
         for rating in 1...5 {
             XCTAssertEqual(app.buttons["feedback.rating.\(rating)"].value as? String, "Not selected")
         }
         capture("08-optional-feedback-left-blank")
         tap(app.buttons["feedback.done"])
-        XCTAssertTrue(app.buttons["practice.start"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons["practice.backToToday"].waitForExistence(timeout: 8))
         selectTab("Journey")
         assertTodayCounts(scheduled: 0, onDemand: 0)
+        openPracticeHistory()
         let practiceRecord = app.staticTexts["Mindful breathing"]
         tap(practiceRecord)
         XCTAssertTrue(labelContaining("Not rated").waitForExistence(timeout: 5))
@@ -101,6 +103,7 @@ final class TendUITests: XCTestCase {
 
         relaunchKeepingData()
         selectTab("Journey")
+        openPracticeHistory()
         tap(app.staticTexts["Mindful breathing"])
         XCTAssertTrue(labelContaining("Not rated").waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["No note added"].waitForExistence(timeout: 5))
@@ -115,10 +118,10 @@ final class TendUITests: XCTestCase {
         tap(app.buttons["ema.close"])
         XCTAssertTrue(label("Come back when you're ready").waitForExistence(timeout: 5))
         tap(app.buttons["Save and close"])
-        XCTAssertTrue(button(identifier: "home.checkIn", label: "Continue saved check-in").waitForExistence(timeout: 5))
+        XCTAssertTrue(button(identifier: "home.checkIn", label: "Continue check-in").waitForExistence(timeout: 5))
 
         relaunchKeepingData()
-        XCTAssertTrue(button(identifier: "home.checkIn", label: "Continue saved check-in").waitForExistence(timeout: 5))
+        XCTAssertTrue(button(identifier: "home.checkIn", label: "Continue check-in").waitForExistence(timeout: 5))
         tap(app.buttons["home.checkIn"])
         XCTAssertTrue(app.buttons["ema.distress.2"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.buttons["ema.distress.2"].value as? String, "Selected")
@@ -176,10 +179,11 @@ final class TendUITests: XCTestCase {
         XCTAssertTrue(confirmation.waitForExistence(timeout: 5))
         confirmation.tap()
         XCTAssertTrue(app.buttons["feedback.done"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["All feedback is optional. Your practice still counts."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Feedback is optional."].waitForExistence(timeout: 5))
         tap(app.buttons["feedback.done"])
-        XCTAssertTrue(app.buttons["practice.start"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.buttons["practice.backToToday"].waitForExistence(timeout: 8))
         selectTab("Journey")
+        openPracticeHistory()
         tap(app.staticTexts["Seated movement break"])
         XCTAssertTrue(labelContaining("1m 0s").waitForExistence(timeout: 5))
         XCTAssertTrue(labelContaining("Not rated").waitForExistence(timeout: 5))
@@ -236,17 +240,34 @@ final class TendUITests: XCTestCase {
         tab.tap()
     }
 
+    @MainActor func openQuestions() {
+        XCTAssertFalse(app.tabBars.buttons["Q&A"].exists)
+        selectTab("Settings")
+        for _ in 0..<6 where !app.buttons["profile.faq"].exists {
+            let back = app.navigationBars.buttons.element(boundBy: 0)
+            guard back.exists else { break }
+            back.tap()
+        }
+        reveal(app.buttons["profile.faq"])
+        app.buttons["profile.faq"].tap()
+    }
+
     @MainActor func openSavedFromToday() {
         selectTab("Today")
         tap(app.buttons["today.saved"])
         XCTAssertTrue(app.scrollViews["saved.screen"].waitForExistence(timeout: 5))
     }
 
+    @MainActor func openPracticeHistory() {
+        tap(app.buttons["journey.allPractices"])
+        XCTAssertTrue(app.navigationBars["All practices"].waitForExistence(timeout: 5))
+    }
+
     @MainActor func testQandAOpensAnswersAndLocalSupport() {
         launchFreshApp()
         onboard()
         XCTAssertFalse(app.tabBars.buttons["Saved"].exists)
-        selectTab("Q&A")
+        openQuestions()
         XCTAssertTrue(app.buttons["qa.question.2"].waitForExistence(timeout: 5))
         XCTAssertFalse(labelContaining("Today → Saved for later").exists)
         capture("qa-collapsed")

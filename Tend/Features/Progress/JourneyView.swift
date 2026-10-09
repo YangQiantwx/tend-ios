@@ -4,11 +4,9 @@ struct JourneyView: View {
     @Environment(AppStore.self) private var store
     @Environment(\.dynamicTypeSize) private var typeSize
     @ScaledMetric(relativeTo: .largeTitle) private var titleSize = 32
-    @State private var range = JourneyRange.week
+    @State private var range = JourneyRange.fourWeeks
     @State private var chart = JourneyChartKind.ratings
     private var analytics: JourneyAnalytics { JourneyAnalytics(data: store.data, configuration: store.configuration) }
-    private var recentCheckIns: [CheckInRecord] { Array(store.data.checkIns.sorted { $0.completedAt > $1.completedAt }.prefix(3)) }
-    private var recentSessions: [PracticeSession] { Array(store.data.sessions.sorted { $0.endedAt > $1.endedAt }.prefix(3)) }
     private var distressPairs: [PracticeDistressPair] { store.data.practiceDistressPairs }
 
     var body: some View {
@@ -16,7 +14,7 @@ struct JourneyView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     if store.usesSampleHistory {
-                        Label(store.isDemoMode ? "Illustrative demo data" : "Illustrative test data", systemImage: "testtube.2")
+                        Label(store.isDemoMode ? "Sample history" : "Test history", systemImage: "testtube.2")
                             .font(.subheadline.weight(.semibold)).foregroundStyle(TendTheme.terracotta)
                     }
                     weeklyProgress
@@ -30,8 +28,7 @@ struct JourneyView: View {
                         chartContent.id("\(range.rawValue)-\(chart.rawValue)")
                     }
                     if !distressPairs.isEmpty { pairedDistressSection }
-                    recentCheckInSection
-                    recentPracticeSection
+                    historySection
                 }.frame(maxWidth: 600).padding(24).frame(maxWidth: .infinity)
             }
             .tendScreen().navigationTitle("Journey").navigationBarTitleDisplayMode(.inline)
@@ -66,38 +63,31 @@ struct JourneyView: View {
     private var weeklyProgress: some View {
         let days = currentWeekDays
         let studyDays = days.filter { $0.status == .active }
-        let completed = studyDays.reduce(0) { $0 + $1.scheduledCount }
-        let planned = studyDays.count * store.data.settings.reminders.count
+        let completed = studyDays.reduce(0) { $0 + $1.totalCheckIns }
         let practices = days.reduce(0) { $0 + $1.completedPracticeCount }
         let minutes = JourneyChartLayout.minutes(days.reduce(0) { $0 + $1.completedSeconds })
         let practiceLabel = "\(practices) \(practices == 1 ? "practice" : "practices")"
         return VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Progress").font(.title3.weight(.semibold))
+                Text("This week").font(.title3.weight(.semibold))
                 Spacer()
                 Text(weekDateLabel).font(.subheadline).foregroundStyle(TendTheme.secondary)
             }
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text("\(completed)/\(planned)")
+                Text("\(completed)")
                     .font(TendTheme.display(titleSize)).monospacedDigit()
-                Text("scheduled check-ins")
+                Text(completed == 1 ? "check-in" : "check-ins")
                     .font(.subheadline).foregroundStyle(TendTheme.secondary)
-            }
-            if planned > 0 {
-                ProgressView(value: Double(completed), total: Double(planned))
-                    .tint(TendTheme.forest)
-                    .accessibilityLabel("Scheduled check-ins this week")
-                    .accessibilityValue("\(completed) of \(planned) planned through today")
             }
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 20) {
                     Label(practiceLabel, systemImage: "checkmark.circle")
                     Spacer()
-                    Text("\(minutes) min")
+                    Text("\(minutes) min total")
                 }
                 VStack(alignment: .leading, spacing: 8) {
                     Label(practiceLabel, systemImage: "checkmark.circle")
-                    Text("\(minutes) min")
+                    Text("\(minutes) min total")
                 }
             }
             .font(.subheadline).foregroundStyle(TendTheme.ink)
@@ -114,18 +104,18 @@ struct JourneyView: View {
     private var pairedDistressSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Recent before and after · demo").font(.title3.weight(.semibold))
+                Text("Distress").font(.title3.weight(.semibold))
                 Spacer()
-                if distressPairs.count > 2 {
+                if distressPairs.count > 1 {
                     NavigationLink("See all") { PairedDistressHistoryView() }
                         .font(.subheadline)
+                        .frame(minHeight: 44)
+                        .accessibilityIdentifier("journey.allDistress")
                 }
             }
-            ForEach(distressPairs.prefix(2)) { pair in
+            ForEach(distressPairs.prefix(1)) { pair in
                 DistressPairRow(pair: pair, title: store.practice(id: pair.practiceID)?.title ?? pair.practiceID)
             }
-            Text("Two self-reports, not a measure of effect.")
-                .font(.subheadline).foregroundStyle(TendTheme.secondary)
         }
     }
 
@@ -142,35 +132,56 @@ struct JourneyView: View {
         guard let monday = calendarWeek.first?.date, let sunday = calendarWeek.last?.date else { return "" }
         return "\(monday.formatted(.dateTime.month(.abbreviated).day()))–\(sunday.formatted(.dateTime.month(.abbreviated).day()))"
     }
-    private var recentCheckInSection: some View {
+    private var historySection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Recent check-ins").font(.title3.weight(.semibold))
-                Spacer()
-                NavigationLink("See all") { CheckInHistoryView() }.font(.subheadline)
+            Text("History").font(.title3.weight(.semibold))
+            VStack(spacing: 0) {
+                NavigationLink { CheckInHistoryView() } label: {
+                    HistoryEntryLabel(title: "Check-in history", symbol: "calendar")
+                }
                     .accessibilityIdentifier("journey.allCheckIns")
-            }.frame(minHeight: 44)
-            if recentCheckIns.isEmpty {
-                Text("No check-ins yet").font(.subheadline).foregroundStyle(TendTheme.secondary)
-            } else {
-                ForEach(recentCheckIns) { CheckInHistoryRow(record: $0) }
+                Divider().overlay(TendTheme.line.opacity(0.4))
+                    .padding(.leading, 52)
+                NavigationLink { PracticeHistoryView() } label: {
+                    HistoryEntryLabel(title: "Practice history", symbol: "leaf")
+                }
+                    .accessibilityIdentifier("journey.allPractices")
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 20)
+            .background(TendTheme.surface, in: RoundedRectangle(cornerRadius: 24))
+            .overlay {
+                RoundedRectangle(cornerRadius: 24)
+                    .strokeBorder(TendTheme.line.opacity(0.45), lineWidth: 0.5)
+                    .allowsHitTesting(false)
             }
         }
     }
-    private var recentPracticeSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Recent practices").font(.title3.weight(.semibold))
-                Spacer()
-                NavigationLink("See all") { PracticeHistoryView() }.font(.subheadline)
-                    .accessibilityIdentifier("journey.allPractices")
-            }.frame(minHeight: 44)
-            if recentSessions.isEmpty {
-                Text("No practices yet").font(.subheadline).foregroundStyle(TendTheme.secondary)
-            } else {
-                ForEach(recentSessions) { PracticeHistoryRow(session: $0) }
-            }
+}
+
+private struct HistoryEntryLabel: View {
+    let title: String
+    let symbol: String
+
+    var body: some View {
+        HStack(spacing: 16) {
+            Image(systemName: symbol)
+                .font(.title3.weight(.medium))
+                .foregroundStyle(TendTheme.forest)
+                .frame(width: 36, height: 36)
+                .accessibilityHidden(true)
+            Text(title).font(.body.weight(.medium))
+                .foregroundStyle(TendTheme.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 8)
+            Image(systemName: "chevron.right")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(TendTheme.secondary)
+                .accessibilityHidden(true)
         }
+        .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
     }
 }
 
@@ -180,10 +191,10 @@ private struct PairedDistressHistoryView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                Text("Before and after · demo")
+                Text("Distress over time")
                     .font(TendTheme.display(32))
                     .accessibilityAddTraits(.isHeader)
-                Text("Two self-reports. A change does not show cause.")
+                Text("Your distress at check-in and after practice.")
                     .font(.body).foregroundStyle(TendTheme.secondary)
                     .padding(.bottom, 8)
                 ForEach(store.data.practiceDistressPairs) { pair in
@@ -200,6 +211,8 @@ private struct PairedDistressHistoryView: View {
 
 private struct DistressPairRow: View {
     @Environment(AppStore.self) private var store
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @ScaledMetric(relativeTo: .largeTitle) private var scoreSize = 32
     let pair: PracticeDistressPair
     let title: String
 
@@ -216,33 +229,67 @@ private struct DistressPairRow: View {
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(title).font(.headline)
-                Spacer(minLength: 8)
-                Text(pair.recordedAt.formatted(date: .abbreviated, time: .omitted))
-                    .font(.subheadline).foregroundStyle(TendTheme.secondary)
+        VStack(alignment: .leading, spacing: 24) {
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    practiceTitle
+                    Spacer(minLength: 0)
+                    recordedDate
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    practiceTitle
+                    recordedDate
+                }
             }
-            HStack(spacing: 10) {
-                rating("At check-in", value: pair.before)
-                Image(systemName: "arrow.right")
-                    .font(.subheadline).foregroundStyle(TendTheme.secondary)
-                    .accessibilityHidden(true)
-                rating("After practice", value: pair.after)
+            let meterLayout = typeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 20))
+                : AnyLayout(HStackLayout(alignment: .top, spacing: 24))
+            meterLayout {
+                distressMeter("Before", context: "At check-in", score: pair.before, color: TendTheme.secondary)
+                distressMeter("After", context: "After practice", score: pair.after, color: TendTheme.forest)
             }
-            .accessibilityElement(children: .combine)
-            Text("Check-in \(pair.checkInCompletedAt.formatted(date: .abbreviated, time: .shortened)) · After \(pair.recordedAt.formatted(date: .abbreviated, time: .shortened))")
-                .font(.subheadline)
-                .foregroundStyle(TendTheme.secondary)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Distress at check-in \(pair.before) of 5, after practice \(pair.after) of 5. Lower means less distress.")
+            Text("Lower scores mean less distress.")
+                .font(.subheadline).foregroundStyle(TendTheme.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("journey.distressScale")
         }
         .tendCard()
     }
 
-    private func rating(_ label: String, value: Int) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label).font(.subheadline).foregroundStyle(TendTheme.secondary)
-            Text("\(value) / 5").font(.title3.weight(.semibold)).monospacedDigit()
+    private var practiceTitle: some View {
+        Text(title).font(.headline)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var recordedDate: some View {
+        Text(pair.recordedAt.formatted(.dateTime.month(.abbreviated).day()))
+            .font(.subheadline).foregroundStyle(TendTheme.secondary)
+            .fixedSize()
+    }
+
+    private func distressMeter(_ label: String, context: String, score: Int, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label).font(.subheadline.weight(.medium))
+                .foregroundStyle(TendTheme.secondary)
+            Text(context).font(.caption).foregroundStyle(TendTheme.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(alignment: .firstTextBaseline, spacing: 3) {
+                Text("\(score)").font(.system(size: scoreSize, weight: .semibold))
+                    .foregroundStyle(TendTheme.ink)
+                Text("/ 5").font(.body).foregroundStyle(TendTheme.secondary)
+            }
+            .monospacedDigit()
+            HStack(spacing: 5) {
+                ForEach(1...5, id: \.self) { level in
+                    Capsule()
+                        .fill(level <= score ? color : TendTheme.line.opacity(0.55))
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 8)
+                }
+            }
+            .accessibilityHidden(true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

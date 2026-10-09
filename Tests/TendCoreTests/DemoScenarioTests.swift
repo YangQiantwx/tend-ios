@@ -39,6 +39,37 @@ struct DemoScenarioTests {
         #expect(!data.practiceDistressPairs.isEmpty)
     }
 
+    @Test func sampleHistoryIsReproducibleVariedAndLatestPairShowsLessDistress() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Asia/Shanghai")!
+        let now = calendar.date(from: DateComponents(year: 2026, month: 10, day: 5, hour: 9))!
+        let configuration = try loadConfiguration()
+        let first = DemoScenario.history(configuration: configuration, now: now, calendar: calendar)
+        let second = DemoScenario.history(configuration: configuration, now: now, calendar: calendar)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        #expect(try encoder.encode(first) == encoder.encode(second))
+        let latest = try #require(first.practiceDistressPairs.first)
+        #expect(latest.before == 3)
+        #expect(latest.after == 2)
+        #expect(first.practiceDistressPairs.contains { $0.after > $0.before })
+        #expect(first.practiceDistressPairs.contains { $0.after == $0.before })
+        #expect(Set(first.sessions.map(\.practiceID)).count >= 4)
+        #expect(Set(first.checkIns.map { calendar.component(.minute, from: $0.completedAt) }).count > 15)
+        #expect(Set(first.checkIns.map { $0.answers.willingness }).count > 2)
+        #expect(Set(first.checkIns.map { $0.answers.fatigue }).count > 2)
+        for record in first.checkIns {
+            let expected = try RuleEngine(configuration: configuration).recommend(for: record.answers).map(\.id)
+            #expect(record.recommendedPracticeIDs == expected)
+        }
+        for session in first.sessions {
+            #expect(session.endedAt.timeIntervalSince(session.startedAt) >= session.durationSeconds)
+            if session.completed {
+                #expect(session.durationSeconds == Double(configuration.practices.first { $0.id == session.practiceID }!.durationSeconds))
+            }
+        }
+    }
+
     @Test func demoPreparationPreservesChangesOnSubsequentLaunches() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         defer { try? FileManager.default.removeItem(at: directory) }
